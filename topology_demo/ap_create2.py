@@ -1,11 +1,11 @@
+#!/usr/bin/env python
 import json
 import ipaddress
 import random
 import copy
 
 #생성할 개수 지정 
-create_count = 15
-div_count = 10
+create_count = 20
 
 with open('physical-topology-demo1.json', 'r') as json_file:
     json_data = json.load(json_file)
@@ -94,7 +94,7 @@ def random_node_create(num):
     return(final_nodes)
 
 # node 생성
-final_nodes = random_node_create(int('{}'.format(create_count)))
+final_nodes = random_node_create(create_count)
 
 node_id_list = []
 for i in json_data['nodes']:
@@ -109,44 +109,31 @@ for i in final_nodes:
 
 # random link 생성
 link_n1 = increase_num(303)
-link_n2 = increase_num(316)
 id_sample1 = '252303'
-id_sample2 = '252316'
 
-def get_random_link(total_num,div_num):
+def get_random_link(total_num):
     random_link = []
     for i in range(total_num):
-        if i < div_num:
-           random_link.append([new_node_list[i].get('id'), id_sample1[:-3] + str(next(link_n1))])
-        else:
-            random_link.append([new_node_list[i].get('id'), id_sample2[:-3] + str(next(link_n2))])
+        random_link.append([new_node_list[i].get('id'), id_sample1[:-3] + str(next(link_n1))])
     return(random_link)
-random_link = get_random_link(create_count, div_count)
-
+random_link = get_random_link(create_count)
 
 for i in json_data['links']:
     if i.get('source') == '28975461-7826-4cac-b9f6-88aa9e5e3f3f':
         ori_link_one = i 
-    elif i.get('source') == '30015a66-1fb6-452b-8504-f0990f8a9509':
-        ori_link_two = i
 ori_link_one = copy.deepcopy(ori_link_one)
-ori_link_two = copy.deepcopy(ori_link_two)
 
 #final link 생성
 final_links = json_data['links'][:]
-def random_link_create(total_num, div_num):
+def random_link_create(total_num):
     for i in range(total_num):
-        if i < div_num:
-            ori_link_one.update({'id':random_link[i][1], 'source':random_link[i][0]})
-            random_dic1 = dict(ori_link_one.items())
-        else:
-            ori_link_two.update({'id':random_link[i][1], 'source':random_link[i][0]})
-            random_dic1 = dict(ori_link_two.items()) 
+        ori_link_one.update({'id':random_link[i][1], 'source':random_link[i][0]})
+        random_dic1 = dict(ori_link_one.items())
         final_links.append(random_dic1)    
     return(final_links)  
 
 # link 생성 (개수 지정)
-final_links = random_link_create(create_count, div_count)
+final_links = random_link_create(create_count)
 # for i in final_links:
 #     if i.get('startPortIpv4Mask'):
 #         i.update({'startPortIpv4Mask':i.get('startPortIpv4Mask').replace(" ","")})
@@ -155,8 +142,6 @@ print(len(final_nodes), len(final_links))
 final_ap_dict = dict({'links' : final_links, 'nodes' : final_nodes})
 
 #json 파일로 내보내기
-# with open('physical-topology-demo1_{}_{}.json'.format(div_count, div_count), 'w') as outfile:
-#     json.dump(final_ap_dict, outfile, indent=4)
-
-with open('physical-topology-demo1_5_10.json', 'w') as outfile:
+with open('physical-topology-demo1_{}.json'.format(create_count), 'w') as outfile:
     json.dump(final_ap_dict, outfile, indent=4)
+

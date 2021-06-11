@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title> Flask test </title>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="#">main</a>
+            <a href="#">home</a>
+            <a href="/about">about</a>
+        </nav>
+        <hr>
+    </header>
+
+    <main role='main'>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>

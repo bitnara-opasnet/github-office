@@ -1,0 +1,82 @@
+{
+    "activeList": {
+        "@noOfActiveSession": "8",
+        "activeSession": [
+            {
+                "user_name": "test2",
+                "calling_station_id": "68:EC:C5:DD:04:D2",
+                "nas_ip_address": "100.127.100.20",
+                "acct_session_id": "0000000a",
+                "audit_session_id": "14647F6400000133D698361A",
+                "server": "admin",
+                "framed_ip_address": "100.100.10.104",
+                "framed_ipv6_address": null
+            },
+            {
+                "user_name": "00:0C:29:FD:D7:70",
+                "calling_station_id": "00:0C:29:FD:D7:70",
+                "nas_ip_address": "100.124.128.161",
+                "acct_session_id": "00000010",
+                "audit_session_id": "0E0040640000001BFDA9EDBF",
+                "server": "admin",
+                "framed_ip_address": "100.100.20.101",
+                "framed_ipv6_address": null
+            },
+            {
+                "user_name": "opas",
+                "calling_station_id": "100.64.0.101",
+                "nas_ip_address": "100.124.0.1",
+                "acct_session_id": "00001A54",
+                "server": "admin",
+                "framed_ipv6_address": null
+            },
+            {
+                "user_name": "test4",
+                "calling_station_id": "00:0C:29:F6:99:95",
+                "nas_ip_address": "100.124.0.3",
+                "acct_session_id": "00000009",
+                "audit_session_id": "0D00406400000016F8541210",
+                "server": "admin",
+                "framed_ip_address": "100.100.10.102",
+                "framed_ipv6_address": null
+            },
+            {
+                "user_name": "test3",
+                "calling_station_id": "00:50:56:A2:07:2B",
+                "nas_ip_address": "100.124.128.161",
+                "acct_session_id": "0000000f",
+                "audit_session_id": "0E0040640000001AFDA90B88",
+                "server": "admin",
+                "framed_ip_address": "100.100.20.102",
+                "framed_ipv6_address": null
+            },
+            {
+                "user_name": "00:50:56:57:32:60",
+                "calling_station_id": "00:50:56:57:32:60",
+                "nas_ip_address": "100.124.128.161",
+                "acct_session_id": "0000000e",
+                "audit_session_id": "0E00406400000019FDA855CD",
+                "server": "admin",
+                "framed_ipv6_address": null
+            },
+            {
+                "user_name": "00:0C:29:D2:A0:F5",
+                "calling_station_id": "00:0C:29:D2:A0:F5",
+                "nas_ip_address": "100.124.0.3",
+                "acct_session_id": "00000007",
+                "audit_session_id": "0D00406400000013A9F8F0AF",
+                "server": "admin",
+                "framed_ip_address": "100.100.10.101",
+                "framed_ipv6_address": null
+            },
+            {
+                "user_name": "opas",
+                "calling_station_id": "192.168.103.47",
+                "nas_ip_address": "100.124.0.1",
+                "acct_session_id": "000010CE",
+                "server": "admin",
+                "framed_ipv6_address": null
+            }
+        ]
+    }
+}
