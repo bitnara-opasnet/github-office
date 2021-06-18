@@ -1,12 +1,36 @@
-from get_api import get_auth_token, get_api_data
-from get_device_random import random_data_create, device_devision
 from get_api import get_xml_data
-from get_random import random_data_create
 import xmltodict
 import json
 import re
 import datetime
 from pytz import timezone
+from get_random import get_hostip_list, get_mac_addr, increase_num
+
+def random_data_create(ip, num, cidr, data, params): 
+    ip_list = get_hostip_list(ip, cidr, num)
+    n = increase_num(0)
+    random_data = []
+    for i in ip_list:
+        random_mac = get_mac_addr()
+        if random_mac in random_data:
+            if params == 'wireless':
+                random_data.append([i, get_mac_addr(), 'wireless_user_'+str(next(n))])
+            else:
+                random_data.append([i, get_mac_addr(), 'wired_user_'+str(next(n))])
+        else:
+            if params == 'wireless' : 
+                random_data.append([i, random_mac,'wireless_user_'+ str(next(n))])
+            else:
+                random_data.append([i, random_mac,'wired_user_'+ str(next(n))])
+    for i in data:              
+        if i.get('framed_ip_address') == ip:
+            sample_data_one = i.copy()
+    final_data = []
+    for i in range(num):
+        sample_data_one.update({'framed_ip_address':random_data[i][0], 'calling_station_id':random_data[i][1], 'user_name':random_data[i][2]})
+        random_dic1 = dict(sample_data_one.items())
+        final_data.append(random_dic1)
+    return(final_data)
 
 def create_active(wireless_num, wired_num, url, params):
     active_data = get_xml_data(url)
@@ -29,15 +53,6 @@ def create_active(wireless_num, wired_num, url, params):
         active_xml = xmltodict.unparse(active_dict, pretty=True, full_document=False)
         active_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + active_xml
         return(active_xml)  
-
-def get_device_sample(params):
-    is_token = get_auth_token()['Token']
-    device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
-    if params == 'wireless':
-        device_sample = device_devision(device_data, 'Unified AP', 'ACCESS')
-    elif params == 'wired':
-        device_sample = device_devision(device_data, 'Switches and Hubs', 'ACCESS')
-    return(device_sample)
 
 def get_macaddr(wireless_device_data, wired_device_data, active_data, wireless_client, wired_client, mac_addr):
     for i in active_data:
@@ -98,3 +113,5 @@ def get_macaddr(wireless_device_data, wired_device_data, active_data, wireless_c
     else:
         client_xml = get_xml_data('https://100.64.0.100/admin/API/mnt/Session/MACAddress/{}'.format(mac_addr))
     return(client_xml)
+
+
