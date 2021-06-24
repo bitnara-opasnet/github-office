@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+ 
+<head>
+    <meta charset="UTF-8">
+    <meta name="Generator" content="EditPlus®">
+    <meta name="Author" content="">
+    <meta name="Keywords" content="">
+    <meta name="Description" content="">
+    <title>SQLite3 게시판 등록</title>
+ 
+    <style type="text/css">
+        body {
+            text-align: left;
+        }
+    </style>
+</head>
+ 
+<body>
+    <form action="/search" method="POST">
+        <input type="text" name="name"/>
+        <input type="submit" value="검 색" /><br>
+    </form>
+
+    <h4 align="left" >검색결과</h4>
+    {% if rows%}
+    <table border=1 width="600" align="left">
+        <thead>
+            <td>이름</td>
+            <td>내용</td>
+        </thead>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <p align="left"> 검색결과가 없습니다. </p>
+        {% endif %}
+    </table>
+</body>
+ 
+</html>
