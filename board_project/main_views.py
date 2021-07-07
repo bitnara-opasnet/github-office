@@ -43,16 +43,9 @@ def before_request():
 def load_user(id):
     return User.query.get(int(id))
 
-# @app.route('/', methods=["POST", "GET"])
-# def main():
-#     if request.method == 'POST':
-#         email = request.form["email"]
-#         password = request.form["password"]
-#         user = User.query.filter_by(email=email).first()
-#         if user.password == password:
-#             session['email'] = request.form['email']
-#             return redirect(url_for("board"))  
-#     return render_template('login.html')
+@app.route('/')
+def main():
+    return render_template('main.html')
 
 @app.route('/register', methods=["POST", "GET"])
 def register():
@@ -85,15 +78,16 @@ def logout():
     return redirect(url_for('login'))
 
 # 게시판 내용 조회 (Read)
-@app.route('/list/')
+@app.route('/board')
 @login_required 
 def board():
+    category_list = ['name', 'title']
     page=request.args.get(get_page_parameter(), type=int, default=1)
     category=request.args.get('category')
     keyword=request.args.get('keyword')
     page_url = request.args.get('page')
     limit = 5
-    # boards = Board.query.all()
+    # print(page)
     if category and keyword:
         search_params = '&' + url_encode({'category':category, 'keyword':keyword}) #&category=title&keyword=abc
         if category == 'name': 
@@ -106,8 +100,7 @@ def board():
         search_params = ''
         boards = Board.query.order_by(Board.create_date.desc())
         boards = boards.paginate(page=page, per_page=5)
-    print(search_params)
-    return render_template('list.html', rows=boards, page=page, limit=limit, page_url=page_url, search_params = search_params)
+    return render_template('list.html', rows=boards, page=page, limit=limit, page_url=page_url, search_params = search_params, category_list=category_list)
 
 
 # 게시판 내용 추가 (Create)
@@ -126,11 +119,14 @@ def add():
 @app.route('/detail/<int:id>')
 @login_required
 def detail(id):
+    category=request.args.get('category')
+    keyword=request.args.get('keyword')
+    search_params = '&' + url_encode({'category':category, 'keyword':keyword})
     row_id = id
     page = request.args.get('page')
     board = Board.query.filter_by(id=row_id).all()
     # print(page)
-    return render_template("detail.html", rows=board, page=page)
+    return render_template("detail.html", rows=board, page=page, search_params=search_params)
 
 # 게시판 내용 갱신 (Update) 
 # @app.route('/detail/<string:title>/update', methods=["GET","POST"])
@@ -155,9 +151,12 @@ def detail(id):
 @app.route('/detail/<int:id>/update', methods=["GET","POST"])
 @login_required
 def update(id):
+    category=request.args.get('category')
+    keyword=request.args.get('keyword')
+    # search_params = '&' + url_encode({'category':category, 'keyword':keyword})
+    page=request.args.get('page')
     if request.method == "POST":
-        row_id = id
-        page=request.args.get('page')
+        row_id = id 
         title = request.form["title"]
         content = request.form["content"]
         board = Board.query.filter_by(id=row_id).first()
@@ -165,12 +164,11 @@ def update(id):
         board.content = content 
         board.create_date = datetime.datetime.now()
         db.session.commit()
-        print(page)
-        return redirect(url_for("board", page=page))
+        return redirect(url_for("board", page=page, keyword=keyword, category=category))
     else:  
         row_id = id 
         board = Board.query.filter_by(id=row_id).all()
-        return render_template("update.html", rows=board)
+        return render_template("update.html", rows=board, keyword=keyword, category=category)
 
 
 # 게시판 내용 삭제 (Delete)
@@ -200,19 +198,26 @@ def delete(id):
 @app.route('/search', methods=["GET","POST"])
 @login_required
 def search(): 
-    if request.method == 'POST':
-        category_list = ['none','name','title']
-        page=request.args.get(get_page_parameter(), type=int, default=1)
-        limit = 5
-        search = request.form.get('search')
-        # search = request.form["search"]
-        if request.form.get('selectgroup') == "name":        
-            board = Board.query.filter(Board.name.contains(search)).paginate(page=page, per_page=5)
-        else:
-            board = Board.query.filter(Board.title.contains(search)).paginate(page=page, per_page=5)
-        return render_template("search.html", rows=board, page=page, limit=limit, category_list=category_list)
+    category_list = ['name', 'title']
+    page=request.args.get(get_page_parameter(), type=int, default=1)
+    category=request.args.get('category')
+    keyword=request.args.get('keyword')
+    page_url = request.args.get('page')
+    limit = 5
+    # boards = Board.query.all()
+    if category and keyword:
+        search_params = '&' + url_encode({'category':category, 'keyword':keyword}) 
+        if category == 'name': 
+            boards = Board.query.filter(Board.name.contains(keyword)).order_by(Board.create_date.desc())
+            boards = boards.paginate(page=page, per_page=5)
+        elif category == 'title':
+            boards = Board.query.filter(Board.title.contains(keyword)).order_by(Board.create_date.desc())
+            boards = boards.paginate(page=page, per_page=5)
     else:
-        return render_template("search.html")
+        search_params = ''
+        boards = Board.query.order_by(Board.create_date.desc())
+        boards = boards.paginate(page=page, per_page=5)
+    return render_template('search.html', rows=boards, page=page, limit=limit, page_url=page_url, search_params = search_params, category_list=category_list, keyword=keyword)
 
 #문의 게시판
 @app.route('/support', methods=["POST", "GET"])

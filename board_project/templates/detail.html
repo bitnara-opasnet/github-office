@@ -24,7 +24,7 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
               <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
-                  <a class="nav-link" href="/list">Home<span class="sr-only">(current)</span></a>
+                  <a class="nav-link" href="/board">Home<span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="/support">문의</a>
@@ -119,8 +119,8 @@
       {% for row in rows %}
       <!-- <button class="btn btn-secondary btn-sm" onclick="location.href='/list'">목록</button>
       <button class="btn btn-secondary btn-sm" onclick="location.href='/detail/{{row.id}}/update'">수정</button> -->
-      <a href="{{url_for('index', page = page)}}" class="btn btn-secondary btn-sm">목록</a>
-      <a href="{{url_for('update', id=row.id, page = page)}}" class="btn btn-secondary btn-sm">수정</a>
+      <a href="{{url_for('board', page = page)}}{{search_params}}" class="btn btn-secondary btn-sm">목록</a>
+      <a href="{{url_for('update', id=row.id, page = page)}}{{search_params}}" class="btn btn-secondary btn-sm">수정</a>
       <!-- <button class="btn btn-secondary btn-sm" onclick="location.href='/detail/{{rows[0].title}}/delete'">삭제</button> -->
       <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#exampleModalCenter">삭제</button>
       <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
