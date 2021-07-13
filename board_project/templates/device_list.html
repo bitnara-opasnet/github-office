@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset='utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js"
+        integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l"
+        crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js"
+        integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Board</a>
+        <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
+                <a class="nav-link" href="/logout">Sign out</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar" style="position:fixed;">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/board">
+                                <!-- <span data-feather="home"></span>
+                                Dashboard <span class="sr-only">(current)</span> -->
+                                <i class="fa fa-list-alt" aria-hidden="true"></i> board
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/stock2">
+                                <!-- <span data-feather="file"></span> -->
+                                <i class="fa fa-table" aria-hidden="true"></i> stock
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Devicelist">
+                                <!-- <span data-feather="shopping-cart"></span> Devicelist -->
+                                <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <h2 class="mb-3">Device list</h2>
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        {% for title_detail in title_list %}
+                                        <th>{{title_detail}}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for device_data in device_list %}
+                                    <tr>
+                                        <td>{{ loop.index}}</td>
+                                        {% for device_detail in device_data %}
+                                        <td>{{device_detail}}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="container-fluid">
+                            <div class="d-flex justify-content-center">
+                                <div class="mb-3">
+                                    <form class="form-inline" action="{{url_for('devicelist')}}" method="GET">
+                                        <div class="form-group">
+                                            <select class="form-control" id="category" name="category">
+                                                <option value="none">===선택===</option>
+                                                {% for title in title_list %}
+                                                <option value="{{title}}" {%if
+                                                    title==request.args.get("category") %} selected {% endif %}>
+                                                    {{title}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            {% if request.args.get('keyword') == None %}
+                                            <input type="text" class="form-control" placeholder="Search" name="keyword">
+                                            {% else %}
+                                            <input type="text" class="form-control" placeholder="Search" name="keyword"
+                                                value="{{request.args.get('keyword')}}">
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            <button type="submit" class="btn btn-default">검 색</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="{{url_for('devicedownload')}}" class="btn btn-success btn-sm">excel</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+
+</html>

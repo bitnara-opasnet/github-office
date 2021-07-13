@@ -1,15 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, g
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, g, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_paginate import Pagination, get_page_parameter
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_login import login_required, login_user, logout_user, current_user
-from models import Board, db, Support, User
+from models import Board, db, Support, User, Stocks
 import os
 import sqlite3
 import json
 import datetime
 from werkzeug.urls import url_encode
+from lib.workbook import make_workbook, make_workbook_chart
+from lib.get_api import get_auth_token, get_api_data
+import requests
+import pandas as pd
 
 app = Flask(__name__)
 # db = SQLAlchemy(app)
@@ -128,25 +132,6 @@ def detail(id):
     # print(page)
     return render_template("detail.html", rows=board, page=page, search_params=search_params)
 
-# 게시판 내용 갱신 (Update) 
-# @app.route('/detail/<string:title>/update', methods=["GET","POST"])
-# def update(title):
-#     if request.method == "POST":
-#         name = request.form["name"]
-#         title1 = request.form["title"]
-#         content = request.form["content"]
-#         conn = sqlite3.connect('board.db')
-#         cur = conn.cursor()
-#         cur.execute('UPDATE Board SET title = ? where name= ?', (title1, name))
-#         cur.execute('UPDATE Board SET content = ? where name= ?', (content, name))
-#         cur.execute('UPDATE Board SET create_date = ? where name= ?', (datetime.datetime.now(), name))
-#         conn.commit()
-#         return redirect(url_for("detail", title=title1))
-#     else:  
-#         name = title  
-#         board = Board.query.filter_by(title=name).all()
-#         return render_template("update.html", rows=board)
-
 #게시판 내용 갱신 (Update) 
 @app.route('/detail/<int:id>/update', methods=["GET","POST"])
 @login_required
@@ -169,20 +154,6 @@ def update(id):
         row_id = id 
         board = Board.query.filter_by(id=row_id).all()
         return render_template("update.html", rows=board, keyword=keyword, category=category)
-
-
-# 게시판 내용 삭제 (Delete)
-# @app.route('/detail/<string:title>/delete') 
-# def delete(title):
-#     name = title  
-#     conn = sqlite3.connect('board.db') 
-#     cur = conn.cursor()
-#     try:
-#         cur.execute('DELETE FROM Board WHERE title = ?', (name,))
-#         conn.commit() 
-#     except:
-#         db.session.rollback()
-#     return redirect(url_for("board"))
 
 # Delete
 @app.route('/detail/<int:id>/delete') 
@@ -231,8 +202,9 @@ def support():
     else:
         return render_template("support.html")
 
-@app.route('/api')
-def api():
+@app.route('/board/api')
+@login_required
+def board_api():
     conn = sqlite3.connect('board.db')
     cur = conn.cursor()
     cur.execute("select * from board;")
@@ -243,21 +215,163 @@ def api():
         board_list.append(dict(zip(table_col,i)))    
     return jsonify(board_list)
 
-@app.route('/login2', methods=['GET', 'POST'])
-def login2():
-	if request.method == 'GET':
-		return render_template('login.html')
-	else:
-		email = request.form['email']
-		passw = request.form['password']
-		try:
-			data = User.query.filter_by(email=email, password=passw).first()
-			if data is not None:
-				session['logged_in'] = True
-				return redirect(url_for('board'))
-			else:
-				return 'Dont Login'
-		except:
-			return "Dont Login"
+@app.route('/user/api')
+@login_required
+def user_api():
+    conn = sqlite3.connect('board.db')
+    cur = conn.cursor()
+    cur.execute("select * from user;")
+    table_col = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    user_list = []
+    for i in rows:
+        user_list.append(dict(zip(table_col,i)))    
+    return jsonify(user_list) 
+
+@app.route('/board/download')
+@login_required
+def download():
+    conn = sqlite3.connect('board.db')
+    cur = conn.cursor()
+    cur.execute("select * from board;")
+    table_col = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    table_data = []
+    for i in rows:
+        table_data.append(list(i))
+    table_data = tuple(table_data)
+    make_workbook('board_list.xlsx', table_col, table_data)
+    return send_file('board_list.xlsx', attachment_filename='board_list.xlsx')
+
+@app.route('/stock')
+def stock():
+    conn = sqlite3.connect("stock.db")
+    cur = conn.cursor()
+    cur.execute("select * from stock;") 
+    title = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    stock_list = []
+        # for i in rows:
+        #     stock_data.append(dict(zip(title,i)))
+    for i in rows:
+        stock_list.append(i)
+    cur.close()
+    conn.close()
+    return render_template("device_detail.html", title=title, stock_list=stock_list)
+
+@app.route('/stock2')
+def stock2():
+    keyword=request.args.get('keyword')
+    page=request.args.get(get_page_parameter(), type=int, default=1)
+    limit = 5
+    if keyword:
+        search_params = '&' + url_encode({'keyword':keyword}) 
+        stocks = Stocks.query.filter(Stocks.name.contains(keyword)).order_by(Stocks.id.asc())
+        stocks = stocks.paginate(page=page, per_page=5)
+    else:
+        search_params = ''
+        stocks = Stocks.query.order_by(Stocks.id.asc())
+        stocks = stocks.paginate(page=page, per_page=5)
+    return render_template("stock_detail.html", stocks=stocks, page=page, limit=limit, keyword=keyword, search_params=search_params)
+
+@app.route("/stock2/chart")
+def CandleChart():
+    name=request.args.get('name')
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    url = 'https://finance.naver.com/item/sise_day.nhn?code=005930&page=1'
+
+    r = requests.get(url, headers={"user-agent": user_agent})
+    tb = r.content.decode('euc-kr')
+    table = pd.read_html(tb, header = 0)[0] 
+
+    table = table.dropna()
+    table = table[['날짜','저가','시가','종가','고가']]
+    stock_list = []
+    for i in range(len(table)):
+        stock_list.append(list(table.iloc[i]))
+    return render_template("detail_chart.html", chartData = stock_list, name=name)
+
+@app.route('/stock/download')
+def stockdownload():
+    conn = sqlite3.connect("stock.db")
+    cur = conn.cursor()
+    cur.execute("select * from stock;") 
+    title = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    stock_list = []
+    for i in rows:
+        stock_list.append(i)
+    table_data = tuple(stock_list)
+    make_workbook('stock_list.xlsx', title, table_data)
+    return send_file('stock_list.xlsx', attachment_filename='stock_list.xlsx')
+
+@app.route('/Devicelist')
+def devicelist():
+    is_token = get_auth_token()['Token']
+    device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
+    title_list = ['managementIpAddress', 'macAddress', 'role',  'platformId', 'hostname', 'softwareVersion']
+    keyword = request.args.get('keyword')
+    category = request.args.get('category')
+
+    if category and keyword:
+        search_params = '&' + url_encode({'category':category, 'keyword':keyword}) 
+        category_list = []
+        for i in device_data.get('response'):
+            # category_list.append(i.get('managementIpAddress'))
+            category_list.append(i.get(category))
+
+        searched_list = []
+        for ip in category_list:
+            if ip.find(keyword) != -1 : 
+                searched_list.append(ip)
+
+        device_list = []
+        for i in device_data.get('response'):
+            imsi_list = []
+            for j in searched_list:
+                # if i.get('managementIpAddress') == j :
+                if i.get(category) == j :
+                    for k in title_list:
+                        imsi_list.append(i.get(k))
+            device_list.append(imsi_list)
+        device_list = list(filter(None, device_list))
+        device_list = tuple(device_list)
+
+    else:
+        search_params = ''
+        device_list = []
+        for i in device_data.get('response'):
+            imsi_list = []
+            for j in title_list:
+                imsi_list.append(i.get(j))
+            device_list.append(imsi_list)
+        device_list = tuple(device_list)
+     
+    return render_template("device_list.html", device_list=device_list, search_params=search_params, title_list=title_list)
+
+@app.route('/device_list/download')
+def devicedownload():
+    is_token = get_auth_token()['Token']
+    device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
+    title_list = ['managementIpAddress', 'macAddress', 'role',  'platformId', 'hostname', 'softwareVersion']
+
+    device_list = []
+    for i in device_data.get('response'):
+        imsi_list = []
+        for j in title_list:
+            imsi_list.append(i.get(j))
+        device_list.append(imsi_list)
+    device_list = tuple(device_list)    
+
+    df = pd.DataFrame(device_list, columns=title_list)
+    chart_df = df.groupby('platformId').size().reset_index(name='count')
+    chart_title = list(chart_df.columns)
+    chart_data = []
+    for i in range(len(chart_df)):
+        chart_data.append(list(chart_df.iloc[i]))
+    chart_data = tuple(chart_data)
+
+    make_workbook_chart('device_list.xlsx', title_list, device_list, chart_title, chart_data, 11, 19, 'column', 'network device count_bar','H1')
+    return send_file('device_list.xlsx', attachment_filename='device_list.xlsx', as_attachment=True)
 
 

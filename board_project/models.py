@@ -54,3 +54,21 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
+
+class Stocks(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    nowVal = db.Column(db.String(200))
+    PrePricenowVal = db.Column(db.String(120))
+    fluctuation = db.Column(db.String(120))
+    faceVal = db.Column(db.String(120))
+    totalVal = db.Column(db.String(120))
+    stockListNum = db.Column(db.String(120))
+    ROF = db.Column(db.String(120))
+    volume = db.Column(db.String(120))
+    PER = db.Column(db.String(120))
+    ROE = db.Column(db.String(120))
+
+    def __repr__(self):
+        return '<name {}>'.format(self.name)
+
