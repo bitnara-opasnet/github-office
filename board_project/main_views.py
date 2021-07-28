@@ -1,4 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, g, send_file
+# -*- coding: utf-8 -*-
+from platform import platform
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, g, send_file, escape
 from flask_sqlalchemy import SQLAlchemy
 from flask_paginate import Pagination, get_page_parameter
 from flask_migrate import Migrate
@@ -9,11 +11,18 @@ import os
 import sqlite3
 import json
 import datetime
-from werkzeug.urls import url_encode
-from lib.workbook import make_workbook, make_workbook_chart
-from lib.get_api import get_auth_token, get_api_data
 import requests
 import pandas as pd
+from datetime import timedelta
+from werkzeug.urls import url_encode
+from werkzeug.utils import secure_filename
+from lib.xlsxpkg import make_chart, make_workbook
+from lib.crawlingpkg.stock_crawling import stock_crawiling
+from lib.apipkg.get_token import get_auth_token
+from lib.apipkg.get_api import get_api_data, get_xml_data
+from lib.random_topology import get_topology_data, get_hostname
+from lib.sysinfo import getLoad, getplatform, net_io
+from PIL import Image
 
 app = Flask(__name__)
 # db = SQLAlchemy(app)
@@ -29,6 +38,7 @@ app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 app.config['SECRET_KEY']='asdfasdfasdfqwerty' 
 app.config['JSON_AS_ASCII'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] =  timedelta(minutes=120)
 
 db.init_app(app) 
 migrate.init_app(app, db)
@@ -49,7 +59,8 @@ def load_user(id):
 
 @app.route('/')
 def main():
-    return render_template('main.html')
+    return render_template('index.html')
+    # return redirect(url_for('login'))
 
 @app.route('/register', methods=["POST", "GET"])
 def register():
@@ -80,6 +91,29 @@ def logout():
     session.pop('username', None)
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/user')
+def user_detail():
+    username = '%s' % escape(session['username'])
+    user_data = User.query.filter_by(username=username).first()
+    return render_template('user_detail.html', user_data=user_data)
+
+@app.route('/user/<int:id>/update', methods=["GET","POST"])
+def user_update(id):
+    userid = id
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        user_data = User.query.filter_by(id=userid).first()
+        user_data.name = name
+        user_data.email = email
+        user_data.password = password
+        db.session.commit()
+        return redirect(url_for("user_detail"))
+    else:  
+        user_data = User.query.filter_by(id=userid).first()
+        return render_template("user_update.html", user_data=user_data)
 
 # 게시판 내용 조회 (Read)
 @app.route('/board')
@@ -112,7 +146,15 @@ def board():
 @login_required
 def add():
     if request.method == "POST":
-        new_board = Board(name=request.form['name'], title=request.form['title'], content=request.form['content'], create_date=datetime.datetime.now())
+        f = request.files['file']
+        sfname = '/image/'+str(secure_filename(f.filename))
+        f.save('./static'+ sfname)
+        image1 = Image.open('./static'+ sfname) 
+        imag1_size = image1.size
+        image1 = image1.resize((int(imag1_size[0]*(0.5)), int(imag1_size[1]*(0.5))))
+        imag1_size = image1.size
+        image1.save('./static'+ sfname)
+        new_board = Board(name=request.form['name'], title=request.form['title'], content=request.form['content'], create_date=datetime.datetime.now(), image_name=sfname)
         db.session.add(new_board)
         db.session.commit()
         return redirect(url_for("board"))
@@ -129,7 +171,6 @@ def detail(id):
     row_id = id
     page = request.args.get('page')
     board = Board.query.filter_by(id=row_id).all()
-    # print(page)
     return render_template("detail.html", rows=board, page=page, search_params=search_params)
 
 #게시판 내용 갱신 (Update) 
@@ -144,10 +185,14 @@ def update(id):
         row_id = id 
         title = request.form["title"]
         content = request.form["content"]
+        f = request.files['file']
+        sfname = '/image/'+str(secure_filename(f.filename))
+        f.save('./static'+ sfname)
         board = Board.query.filter_by(id=row_id).first()
         board.title = title
         board.content = content 
         board.create_date = datetime.datetime.now()
+        board.image_name = sfname
         db.session.commit()
         return redirect(url_for("board", page=page, keyword=keyword, category=category))
     else:  
@@ -213,10 +258,10 @@ def board_api():
     board_list = []
     for i in rows:
         board_list.append(dict(zip(table_col,i)))    
-    return jsonify(board_list)
+    return jsonify({'response':board_list})
 
 @app.route('/user/api')
-@login_required
+# @login_required
 def user_api():
     conn = sqlite3.connect('board.db')
     cur = conn.cursor()
@@ -226,7 +271,7 @@ def user_api():
     user_list = []
     for i in rows:
         user_list.append(dict(zip(table_col,i)))    
-    return jsonify(user_list) 
+    return jsonify({'response':user_list}) 
 
 @app.route('/board/download')
 @login_required
@@ -240,10 +285,11 @@ def download():
     for i in rows:
         table_data.append(list(i))
     table_data = tuple(table_data)
-    make_workbook('board_list.xlsx', table_col, table_data)
-    return send_file('board_list.xlsx', attachment_filename='board_list.xlsx')
+    make_workbook.make_workbook('board_list.xlsx', table_col, table_data)
+    return send_file('board_list.xlsx', attachment_filename='board_list.xlsx', as_attachment=True)
 
 @app.route('/stock')
+@login_required
 def stock():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
@@ -260,7 +306,9 @@ def stock():
     return render_template("device_detail.html", title=title, stock_list=stock_list)
 
 @app.route('/stock2')
+@login_required
 def stock2():
+    # stock_crawiling()
     keyword=request.args.get('keyword')
     page=request.args.get(get_page_parameter(), type=int, default=1)
     limit = 5
@@ -274,12 +322,51 @@ def stock2():
         stocks = stocks.paginate(page=page, per_page=5)
     return render_template("stock_detail.html", stocks=stocks, page=page, limit=limit, keyword=keyword, search_params=search_params)
 
-@app.route("/stock2/chart")
-def CandleChart():
-    name=request.args.get('name')
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
-    url = 'https://finance.naver.com/item/sise_day.nhn?code=005930&page=1'
+# @app.route('/stock/download')
+# @login_required
+# def stockdownload():
+#     conn = sqlite3.connect("stock.db")
+#     cur = conn.cursor()
+#     cur.execute("select * from stock;") 
+#     title = [desc[0] for desc in cur.description]
+#     rows = cur.fetchall()
+#     stock_list = []
+#     for i in rows:
+#         stock_list.append(i)
+#     table_data = tuple(stock_list)
+#     make_workbook.make_workbook('stock_list.xlsx', title, table_data)
+#     return send_file('stock_list.xlsx', attachment_filename='stock_list.xlsx', as_attachment=True)
 
+@app.route('/stock/download')
+@login_required
+def stockdownloads():
+    keyword=request.args.get('keyword')
+    conn = sqlite3.connect("stock.db")
+    cur = conn.cursor()
+    if keyword :
+        keyword=request.args.get('keyword')
+        cur.execute("select * from stock where name like '%{}%';".format(keyword)) 
+    else:
+        keyword=''
+        cur.execute("select * from stock;")
+    title = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    stock_list = []
+    for i in rows:
+        stock_list.append(i)
+    table_data = tuple(stock_list)
+    make_workbook.make_workbook('stock_list.xlsx', title, table_data)
+    return send_file('stock_list.xlsx', attachment_filename='stock_list.xlsx', as_attachment=True)
+
+@app.route("/stock2/chart")
+@login_required
+def CandleChart():
+    keyword=request.args.get('keyword')
+    search_params = '&' + url_encode({'keyword':keyword}) 
+    page=request.args.get('page')
+    code=request.args.get('code')
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    url = 'https://finance.naver.com/item/sise_day.nhn?code={}&page=1'.format(code)
     r = requests.get(url, headers={"user-agent": user_agent})
     tb = r.content.decode('euc-kr')
     table = pd.read_html(tb, header = 0)[0] 
@@ -289,27 +376,42 @@ def CandleChart():
     stock_list = []
     for i in range(len(table)):
         stock_list.append(list(table.iloc[i]))
-    return render_template("detail_chart.html", chartData = stock_list, name=name)
+    
+    stocks = Stocks.query.filter(Stocks.Code.contains(code)).order_by(Stocks.id.asc())
+    return render_template("detail_chart.html", chartData = stock_list, code=code, stocks=stocks, page=page, search_params=search_params)
 
-@app.route('/stock/download')
-def stockdownload():
-    conn = sqlite3.connect("stock.db")
-    cur = conn.cursor()
-    cur.execute("select * from stock;") 
-    title = [desc[0] for desc in cur.description]
-    rows = cur.fetchall()
+@app.route("/stock2/chart/download")
+@login_required
+def Chartdownload():
+    code=request.args.get('code')
+    name=request.args.get('name')
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    url = 'https://finance.naver.com/item/sise_day.nhn?code={}&page=1'.format(code)
+    r = requests.get(url, headers={"user-agent": user_agent})
+    tb = r.content.decode('euc-kr')
+    table = pd.read_html(tb, header = 0)[0] 
+    table = table.dropna()
+    table = table[['날짜','저가','시가','종가','고가']]
+    title = ['date','row','opening price','closing price','high']
     stock_list = []
-    for i in rows:
-        stock_list.append(i)
+    for i in range(len(table)):
+        stock_list.append(list(table.iloc[i]))
     table_data = tuple(stock_list)
-    make_workbook('stock_list.xlsx', title, table_data)
-    return send_file('stock_list.xlsx', attachment_filename='stock_list.xlsx')
+    make_workbook.make_workbook('chart.xlsx', title, table_data)
+    return send_file('chart.xlsx', attachment_filename='chart.xlsx', as_attachment=True)
 
-@app.route('/Devicelist')
+@app.route('/device_list')
+@login_required 
 def devicelist():
-    is_token = get_auth_token()['Token']
-    device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
-    title_list = ['managementIpAddress', 'macAddress', 'role',  'platformId', 'hostname', 'softwareVersion']
+    # is_token = get_auth_token()['Token']
+    # device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
+    with open('network_device.json', 'r') as json_file:
+        device_data = json.load(json_file)
+
+    for i in device_data.get('response'):
+        i.update({'Item': get_hostname(i)})
+
+    title_list = ['Item','managementIpAddress', 'macAddress', 'role',  'platformId', 'hostname', 'softwareVersion']
     keyword = request.args.get('keyword')
     category = request.args.get('category')
 
@@ -324,6 +426,7 @@ def devicelist():
         for ip in category_list:
             if ip.find(keyword) != -1 : 
                 searched_list.append(ip)
+        searched_list = set(searched_list)
 
         device_list = []
         for i in device_data.get('response'):
@@ -336,7 +439,7 @@ def devicelist():
             device_list.append(imsi_list)
         device_list = list(filter(None, device_list))
         device_list = tuple(device_list)
-
+ 
     else:
         search_params = ''
         device_list = []
@@ -346,22 +449,54 @@ def devicelist():
                 imsi_list.append(i.get(j))
             device_list.append(imsi_list)
         device_list = tuple(device_list)
-     
+
     return render_template("device_list.html", device_list=device_list, search_params=search_params, title_list=title_list)
 
 @app.route('/device_list/download')
+@login_required
 def devicedownload():
-    is_token = get_auth_token()['Token']
-    device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
-    title_list = ['managementIpAddress', 'macAddress', 'role',  'platformId', 'hostname', 'softwareVersion']
+    # is_token = get_auth_token()['Token']
+    # device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
+    with open('network_device.json', 'r') as json_file:
+        device_data = json.load(json_file)
 
-    device_list = []
     for i in device_data.get('response'):
-        imsi_list = []
-        for j in title_list:
-            imsi_list.append(i.get(j))
-        device_list.append(imsi_list)
-    device_list = tuple(device_list)    
+        i.update({'Item': get_hostname(i)})   
+
+    title_list = ['Item','managementIpAddress', 'macAddress', 'role',  'platformId', 'hostname', 'softwareVersion']
+    keyword = request.args.get('keyword')
+    category = request.args.get('category')
+
+    if category and keyword:
+        category_list = []
+        for i in device_data.get('response'):
+            # category_list.append(i.get('managementIpAddress'))
+            category_list.append(i.get(category))
+
+        searched_list = []
+        for item in category_list:
+            if item.find(keyword) != -1 : 
+                searched_list.append(item)
+        searched_list = set(searched_list)
+
+        device_list = []
+        for i in device_data.get('response'):
+            imsi_list = []
+            for j in searched_list:
+                # if i.get('managementIpAddress') == j :
+                if i.get(category) == j :
+                    for k in title_list:
+                        imsi_list.append(i.get(k))
+            device_list.append(imsi_list)
+        device_list = list(filter(None, device_list))
+ 
+    else:
+        device_list = []
+        for i in device_data.get('response'):
+            imsi_list = []
+            for j in title_list:
+                imsi_list.append(i.get(j))
+            device_list.append(imsi_list)
 
     df = pd.DataFrame(device_list, columns=title_list)
     chart_df = df.groupby('platformId').size().reset_index(name='count')
@@ -369,9 +504,79 @@ def devicedownload():
     chart_data = []
     for i in range(len(chart_df)):
         chart_data.append(list(chart_df.iloc[i]))
+
+    device_list = tuple(device_list)     
     chart_data = tuple(chart_data)
 
-    make_workbook_chart('device_list.xlsx', title_list, device_list, chart_title, chart_data, 11, 19, 'column', 'network device count_bar','H1')
+    make_chart.make_workbook_chart('device_list.xlsx', title_list, device_list, chart_title, chart_data, 11, 19, 'column', 'network device count_bar','I1')
     return send_file('device_list.xlsx', attachment_filename='device_list.xlsx', as_attachment=True)
 
+@app.route('/device_list/<int:id>/detail')
+@login_required
+def devicedetail(id):
+    # is_token = get_auth_token()['Token']
+    # device_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/network-device')
+    with open('network_device.json', 'r') as json_file:
+        device_data = json.load(json_file)
+    category=request.args.get('category')
+    keyword=request.args.get('keyword')
+    search_params = '&' + url_encode({'category':category, 'keyword':keyword})
+    row_id = id -1
+    device_detail = device_data.get('response')[row_id]
+    title_list = list(device_detail.keys())
+    device_list = list(device_detail.values())
+    return render_template("device_detail.html", device_list=device_list, title_list=title_list, device_detail=device_detail, search_params=search_params)
 
+@app.route('/sample')
+def logo():
+    return render_template('logo_sample.html')
+
+if not app.debug: # debug=False일때만 실행
+    import logging
+    from logging.handlers import RotatingFileHandler  
+    file_handler = RotatingFileHandler(
+        'dave_server.log', maxBytes=2000, backupCount=10)
+    file_handler.setLevel(logging.WARNING)  #단계설정
+    app.logger.addHandler(file_handler)
+ 
+@app.errorhandler(404)
+def page_not_found(error):
+    app.logger.error('page_not_found error')
+    return "<h1> 404 error</h1>", 404
+
+@app.route('/dna/intent/api/v1/topology/physical-topology')
+def getTopology():
+    final_dict = get_topology_data() 
+    return jsonify(final_dict)
+
+@app.route('/sysinfo')
+def sysinfo():
+    final_dict = getLoad()
+    cpu = final_dict.get('cpu')
+    memory = final_dict.get('memory')
+    swap = final_dict.get('swap')
+    disks = final_dict.get('disk')
+    networks = final_dict.get('network')
+    address=[]
+    netmask=[]
+    broadcast_=[]
+    for network in networks:
+        for key, values in network.items():
+            for value in values:
+                address.append(value.get('address'))
+                netmask.append(value.get('netmask'))
+                broadcast_.append(value.get('broadcast'))
+    net_list = [address,netmask,broadcast_]
+    plat = getplatform()
+    return render_template("sysinfo.html", cpu=cpu, memory=memory, swap=swap, disks=disks, plat=plat, net_list=net_list, networks=networks)
+
+@app.route('/sysinfodata')
+def sysinfodata():
+    d = {'results':[]}
+    rst = net_io()
+    d['results'] = rst
+    return jsonify(d)
+
+@app.route('/sysinfo2')
+def sysinfo2():
+    return render_template("sysinfo2.html")

@@ -29,22 +29,110 @@
         function drawChart() {
             var data = google.visualization.arrayToDataTable({{ chartData | safe}}, true);
 
-        var options = {
-            title: 'Company Performance',
-            curveType: 'function',
-            legend: { position: 'bottom' }
-        };
+            var options = {
+                title: '',
+                curveType: 'function',
+                legend: { position: 'bottom' }
+            };
 
-        var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+            var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
 
-        chart.draw(data, options);
-        }
+            chart.draw(data, options);
+            }
 
     </script>
 </head>
 
 <body>
-    <div id="chart_div" style="width: 900px; height: 500px;"></div>
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+        <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
+        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
+        <ul class="navbar-nav d-flex flex-row">
+            <li class="nav-item text-nowrap mr-3">
+                <a class="nav-link" href="/user">회원 정보</a>
+            </li>
+            <li class="nav-item text-nowrap mr-2">
+                <a class="nav-link" href="/logout">Sign out</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar" style="position:fixed;">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/board">
+                                <!-- <span data-feather="home"></span>
+                                Dashboard <span class="sr-only">(current)</span> -->
+                                <i class="fa fa-list-alt" aria-hidden="true"></i> board
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/stock2">
+                                <i class="fa fa-table" aria-hidden="true"></i> stock
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/device_list"> 
+                                <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('getTopology')}}"> 
+                                <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('sysinfo')}}"> 
+                                <i class="fa fa-info" aria-hidden="true"></i> system info
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+                <div class="container-fluid">
+                    <h2 style="text-align: center;">{{stocks[0].name}} 일별 차트 </h2>
+                    <div class="row">
+                        <div class="col-8">
+                            <div id="chart_div" style="width: 900px; height: 500px;"></div>
+                        </div>
+                        <div class="col-4 mt-4">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>날짜</th>
+                                        <th>최저가</th>
+                                        <th>시가</th>
+                                        <th>정가</th>
+                                        <th>고가</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in chartData %}
+                                    <tr>
+                                        <td>{{data[0]}}</td>
+                                        <td>{{data[1]}}</td>
+                                        <td>{{data[2]}}</td>
+                                        <td>{{data[3]}}</td>
+                                        <td>{{data[4]}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{url_for('stock2', page=page)}}{{search_params}}" class="btn btn-secondary btn-sm">목록</a>
+                <a href="{{url_for('Chartdownload', name=stocks[0].name)}}" class="btn btn-success btn-sm">excel</a>
+            </main>
+        </div>
+    </div>
+ 
 </body>
 
 </html>

@@ -25,9 +25,14 @@
 
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
-        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Board</a>
-        <ul class="navbar-nav px-3">
-            <li class="nav-item text-nowrap">
+        <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
+        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
+        <ul class="navbar-nav d-flex flex-row">
+            <li class="nav-item text-nowrap mr-3">
+                <a class="nav-link" href="/user">회원 정보</a>
+            </li>
+            <li class="nav-item text-nowrap mr-2">
                 <a class="nav-link" href="/logout">Sign out</a>
             </li>
         </ul>
@@ -47,14 +52,22 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/stock2">
-                                <!-- <span data-feather="file"></span> -->
                                 <i class="fa fa-table" aria-hidden="true"></i> stock
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/Devicelist">
-                                <!-- <span data-feather="shopping-cart"></span> Devicelist -->
+                            <a class="nav-link" href="/device_list"> 
                                 <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('getTopology')}}"> 
+                                <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('sysinfo')}}"> 
+                                <i class="fa fa-info" aria-hidden="true"></i> system info
                             </a>
                         </li>
                     </ul>
@@ -80,7 +93,7 @@
                                     {% for stock in stocks.items %}
                                     <tr>
                                         <td>{{stock.id}}</td>
-                                        <td><a href='{{url_for("CandleChart", name=stock.name)}}'>{{stock.name}}</a></td>
+                                        <td><a href='{{url_for("CandleChart", code=stock.Code, page=page)}}{{search_params}}'>{{stock.name}}</a></td>
                                         <td>{{stock.PrePricenowVal}}</td>
                                         <td>{{stock.fluctuation}}</td>
                                         <td>{{stock.volume}}</td>
@@ -142,7 +155,7 @@
                     </ul>
                 </nav>
                 <div>
-                    <a href="{{url_for('stockdownload')}}" class="btn btn-success btn-sm">excel</a>
+                    <a href="{{url_for('stockdownloads')}}?keyword={{keyword}}" class="btn btn-success btn-sm">excel</a>
                 </div>
             </main>
 

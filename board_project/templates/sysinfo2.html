@@ -1,9 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
     <meta charset='utf-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no' />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
@@ -26,10 +26,13 @@
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
         <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
-        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Board</a>
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
         <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
-        <ul class="navbar-nav px-3">
-            <li class="nav-item text-nowrap">
+        <ul class="navbar-nav d-flex flex-row">
+            <li class="nav-item text-nowrap mr-3">
+                <a class="nav-link" href="/user">회원 정보</a>
+            </li>
+            <li class="nav-item text-nowrap mr-2">
                 <a class="nav-link" href="/logout">Sign out</a>
             </li>
         </ul>
@@ -42,6 +45,8 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link active" href="/board">
+                                <!-- <span data-feather="home"></span>
+                                Dashboard <span class="sr-only">(current)</span> -->
                                 <i class="fa fa-list-alt" aria-hidden="true"></i> board
                             </a>
                         </li>
@@ -55,23 +60,53 @@
                                 <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('getTopology')}}"> 
+                                <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('sysinfo')}}"> 
+                                <i class="fa fa-info" aria-hidden="true"></i> system info
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
 
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-                <div class="container-fluid">
-                    <h1>로그인이 필요합니다</h1>
-                    <!-- <button type="button" class="btn btn-secondary mt-2" onclick="location.href='register'"> 회원가입 </button>
-                    <button type="button" class="btn btn-secondary mt-2" onclick="location.href='login'"> 로그인 </button> -->
-                    <a href="{{url_for('register')}}" class="btn btn-secondary mt-2">회원가입</a>
-                    <a href="{{url_for('login')}}" class="btn btn-secondary mt-2">로그인</a>
+                <div>
+                    <span id=sentpkt></span>
+                    <span id=recvpkt></span>
                 </div>
             </main>
         </div>
-    </div> 
+    </div>
 
-
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    var endpointurl = "{{url_for('sysinfodata')}}";
+    console.log(endpointurl);
+    function getpacketIO(){
+        $.ajax({
+            type: "GET",
+            url: endpointurl,
+            datatype:"json",
+            // async: false,
+            success: function(data){
+                var sent = data.results[0];
+                var recv = data.results[1];
+                $("#sentpkt").html(sent);
+                $("#recvpkt").html(recv);
+            },
+            error: function(){
+                console.log("error");
+            }
+        })
+    }
+    // getpacketIO();
+    setInterval(getpacketIO, 1000);
+</script>
 </body>
 
 </html>

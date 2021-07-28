@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset='utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js"
+        integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l"
+        crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js"
+        integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+        <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
+        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
+        <ul class="navbar-nav d-flex flex-row">
+            <li class="nav-item text-nowrap mr-3">
+                <a class="nav-link" href="/user">회원 정보</a>
+            </li>
+            <li class="nav-item text-nowrap mr-2">
+                <a class="nav-link" href="/logout">Sign out</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar" style="position:fixed;">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/board">
+                                <!-- <span data-feather="home"></span>
+                                Dashboard <span class="sr-only">(current)</span> -->
+                                <i class="fa fa-list-alt" aria-hidden="true"></i> board
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/stock2">
+                                <i class="fa fa-table" aria-hidden="true"></i> stock
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/device_list"> 
+                                <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('getTopology')}}"> 
+                                <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('sysinfo')}}"> 
+                                <i class="fa fa-info" aria-hidden="true"></i> system info
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+                <div class="container-fluid">
+                    <h2 class="mb-3">System Infomation</h2>
+                    <div class="row">
+                        <div class="col-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">CPU</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-condensed table-sm">
+                                        <tr>
+                                            <td>frequency</td>
+                                            <td>{{cpu.freq}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>cpu count</td>
+                                            <td>{{cpu.count}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>cpu idle</td>
+                                            <td>{{cpu.idle}}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Disk</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-condensed table-sm table-bordered">
+                                        <tr>
+                                            <td>mountpoint</td>
+                                            {% for key, values in disks.items() %}
+                                            <td>{{key}}</td>
+                                            {% endfor %}
+                                        </tr>
+                                        <tr>
+                                            <td>total</td>
+                                            {% for key, values in disks.items() %}
+                                            <td>{{values.total}}</td>
+                                            {% endfor %}
+                                        </tr>
+                                        <tr>
+                                            <td>usage</td>
+                                            {% for key, values in disks.items() %}
+                                            <td>{{values.used}}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Swap</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-condensed table-sm">
+                                        <tr>
+                                            <td>total memory</td>
+                                            <td>{{swap.total}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>used memory</td>
+                                            <td>{{swap.used}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>free memory</td>
+                                            <td>{{swap.free}}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Memory</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-condensed table-sm">
+                                        <tr>
+                                            <td>total memory</td>
+                                            <td>{{memory.total}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>used memory</td>
+                                            <td>{{memory.used}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>free memory</td>
+                                            <td>{{memory.free}}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+
+                    <div class="row">
+                        <div class="col-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Platform</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-condensed table-sm">
+                                        <tr>
+                                            <td>Kernel</td>
+                                            <td>{{plat.Kernel}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>system</td>
+                                            <td>{{plat.system}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>node</td>
+                                            <td>{{plat.node}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>release</td>
+                                            <td>{{plat.release}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>version</td>
+                                            <td>{{plat.version}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>processor</td>
+                                            <td>{{plat.processor}}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="col-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Network</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-hover table-sm">
+                                        <thead>
+                                            <th>name</th>
+                                            <th>address</th>
+                                            <th>netmask</th>
+                                            <th>broadcast</th>
+                                        </thead>
+                                        <tbody>
+                                            {% for network in networks %}
+                                            {% for key, values in network.items() %}
+                                            {% for value in values %}
+                                            <tr>
+                                                <td>{{key}}</td>
+                                                <td>{{value.address}}</td>
+                                                <td>{{value.netmask}}</td>
+                                                <td>{{value.broadcast}}</td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% endfor %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div> -->
+                        <div class="col-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Network I/O</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-condensed table-sm">
+                                        <tr>
+                                            <td>sent</td>
+                                            <td id=sentpkt></td>
+                                        </tr>
+                                        <tr>
+                                            <td>receive</td>
+                                            <td id=recvpkt></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    var endpointurl = "{{url_for('sysinfodata')}}";
+    console.log(endpointurl);
+    function getpacketIO(){
+        $.ajax({
+            type: "GET",
+            url: endpointurl,
+            datatype:"json",
+            // async: false,
+            success: function(data){
+                var sent = data.results[0];
+                var recv = data.results[1];
+                $("#sentpkt").html(sent);
+                $("#recvpkt").html(recv);
+            },
+            error: function(){
+                console.log("error");
+            }
+        })
+    }
+    // getpacketIO();
+    setInterval(getpacketIO, 5000);
+</script>
+</body>
+
+</html>

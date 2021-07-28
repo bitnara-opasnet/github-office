@@ -7,13 +7,14 @@ import json
 import re
 import datetime
 from pytz import timezone
+import random
 
 def create_active(wireless_num, wired_num, url, params):
     active_data = get_xml_data(url)
     active_data = json.dumps(xmltodict.parse(active_data, process_namespaces=True))
     active_data = json.loads(active_data)
     active_Session = active_data.get('activeList').get('activeSession')
-    wireless_client = random_data_create('100.100.10.102', wireless_num, '/16', active_Session, 'wireless')
+    wireless_client = random_data_create('100.100.10.103', wireless_num, '/16', active_Session, 'wireless')
     wired_client = random_data_create('100.100.20.101', wired_num, '/16', active_Session, 'wired')
     final_list = []
     for i in active_Session:
@@ -50,7 +51,10 @@ def get_macaddr(wireless_device_data, wired_device_data, active_data, wireless_c
         attr_string = client_data.get('sessionParameters').get('other_attr_string')
         attr_string = re.sub(client_data.get('sessionParameters').get('user_name') , active_sample_data.get('user_name'), attr_string)
         attr_split = attr_string.split(':')
-        split_index = attr_split.index('Called-Station-ID=7c-21-0d-9f-0a-20')
+        if 'Called-Station-ID=7c-21-0d-9f-0a-20' in attr_split: 
+            split_index = attr_split.index('Called-Station-ID=7c-21-0d-9f-0a-20')
+        else:
+            split_index = attr_split.index('Called-Station-ID=0c-75-bd-b7-9e-c0')
         if int(active_sample_data.get('user_name').split('_')[2])%2 == 0:
             attr_split[split_index] = attr_split[split_index].replace(attr_split[split_index].split('=')[1], wireless_device_data[0].get('macAddress').replace(':','-'))
         else:
@@ -58,11 +62,18 @@ def get_macaddr(wireless_device_data, wired_device_data, active_data, wireless_c
         attr_string = ':'.join(attr_split)
         cur_time = timezone('Asia/Seoul').localize(datetime.datetime.now())
         cur_time = cur_time.isoformat()[:-9] + cur_time.isoformat()[-6:]
+        # if active_sample_data.get('user_name').split('_')[2].endswith(('1','2')):
+        #     client_sample_data.update({'cts_security_group' : 'GR101'})
+        # elif active_sample_data.get('user_name').split('_')[2].endswith(('3','4')):
+        #     client_sample_data.update({'cts_security_group' : 'GR102'})
+        # else:
+        #     client_sample_data.update({'cts_security_group' : 'GR'+str(random.randint(103, 110))})
         client_sample_data.update({'user_name': active_sample_data.get('user_name'),
                                 'framed_ip_address': active_sample_data.get('framed_ip_address'),
                                 'calling_station_id': active_sample_data.get('calling_station_id'),
                                 'orig_calling_station_id':active_sample_data.get('calling_station_id').replace(':','-').lower(),
-                                'other_attr_string': attr_string, 'auth_acs_timestamp':cur_time,'auth_acsview_timestamp': cur_time})
+                                'cts_security_group' : 'GR'+str(random.randint(1, 10)),
+                                'other_attr_string': attr_string, 'acct_acs_timestamp':cur_time,'acct_acsview_timestamp': cur_time})
         column_list = ['passed', 'failed', 'started', 'stopped']
         for i in column_list:
             client_sample_data.get(i)['@xsi:type'] = client_sample_data.get(i).pop('@http://www.w3.org/2001/XMLSchema-instance:type')
@@ -75,21 +86,40 @@ def get_macaddr(wireless_device_data, wired_device_data, active_data, wireless_c
         client_sample_data = client_data.get('sessionParameters').copy()
         attr_string = client_data.get('sessionParameters').get('other_attr_string')
         attr_string = re.sub(client_data.get('sessionParameters').get('user_name') , active_sample_data.get('user_name'), attr_string)
-        attr_split = attr_string.split(':!:')
-        split_index = attr_split.index('Called-Station-ID=DC:F7:19:00:63:02')
-        if int(active_sample_data.get('user_name').split('_')[2])%2 == 0:
-            attr_split[split_index] = attr_split[split_index].replace(attr_split[split_index].split('=')[1], wired_device_data[0].get('macAddress'))
+        if attr_string.find(':!:') != -1 :
+            attr_split = attr_string.split(':!:')
+            split_index = attr_split.index('Called-Station-ID=DC:F7:19:00:63:02')
+            if int(active_sample_data.get('user_name').split('_')[2])%2 == 0:
+                attr_split[split_index] = attr_split[split_index].replace(attr_split[split_index].split('=')[1], wired_device_data[0].get('macAddress'))
+            else:
+                attr_split[split_index] = attr_split[split_index].replace(attr_split[split_index].split('=')[1], wired_device_data[1].get('macAddress'))
+            attr_string = ':!:'.join(attr_split)
         else:
-            attr_split[split_index] = attr_split[split_index].replace(attr_split[split_index].split('=')[1], wired_device_data[1].get('macAddress'))
-        attr_string = ':!:'.join(attr_split)
+            attr_split = attr_string.split(',')
+            split_index = attr_split.index('Called-Station-ID=DC:F7:19:00:63:02')
+            if int(active_sample_data.get('user_name').split('_')[2])%2 == 0:
+                attr_split[split_index] = attr_split[split_index].replace(attr_split[split_index].split('=')[1], wired_device_data[0].get('macAddress'))
+            else:
+                attr_split[split_index] = attr_split[split_index].replace(attr_split[split_index].split('=')[1], wired_device_data[1].get('macAddress'))
+            attr_string = ','.join(attr_split)
         cur_time = timezone('Asia/Seoul').localize(datetime.datetime.now())
         cur_time = cur_time.isoformat()[:-9] + cur_time.isoformat()[-6:]
+        # if active_sample_data.get('user_name').split('_')[2].endswith(('1','2')):
+        #     client_sample_data.update({'cts_security_group' : 'GR101'})
+        # elif active_sample_data.get('user_name').split('_')[2].endswith(('3','4')):
+        #     client_sample_data.update({'cts_security_group' : 'GR102'})
+        # else:
+        #     client_sample_data.update({'cts_security_group' : 'GR'+str(random.randint(103, 110))})
         client_sample_data.update({'user_name': active_sample_data.get('user_name'),
                                 'framed_ip_address': active_sample_data.get('framed_ip_address'),
                                 'calling_station_id': active_sample_data.get('calling_station_id'),
                                 'orig_calling_station_id':active_sample_data.get('calling_station_id').replace(':','-'),
-                                'other_attr_string': attr_string, 'auth_acs_timestamp':cur_time,'auth_acsview_timestamp': cur_time})
-        column_list = ['passed', 'failed', 'started', 'stopped']
+                                'cts_security_group' : 'GR'+str(random.randint(1, 10)),
+                                'other_attr_string': attr_string, 'acct_acs_timestamp':cur_time,'acct_acsview_timestamp': cur_time})
+        if 'passed' in list(client_sample_data.keys()) :
+            column_list = ['passed', 'failed', 'started', 'stopped']
+        else:
+            column_list = ['started', 'stopped']
         for i in column_list:
             client_sample_data.get(i)['@xsi:type'] = client_sample_data.get(i).pop('@http://www.w3.org/2001/XMLSchema-instance:type')
         final_dic = dict({'sessionParameters':client_sample_data})

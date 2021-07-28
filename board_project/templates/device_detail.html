@@ -25,14 +25,12 @@
 
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
-        <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
         <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
-        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
-        <ul class="navbar-nav d-flex flex-row">
-            <li class="nav-item text-nowrap mr-3">
+        <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
                 <a class="nav-link" href="/user">회원 정보</a>
             </li>
-            <li class="nav-item text-nowrap mr-2">
+            <li class="nav-item text-nowrap">
                 <a class="nav-link" href="/logout">Sign out</a>
             </li>
         </ul>
@@ -77,65 +75,71 @@
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
                 <div class="container-fluid">
                     <div class="row">
-                        <div class="col-12">
-                            <h2 class="mb-3">Device list</h2>
-                            <table class="table table-hover table-sm">
+                        <div class="col-10">
+                            <h2 class="mb-3">Device detail</h2>
+                            <!-- <table class="table table-hover table-sm">
                                 <thead>
                                     <tr>
-                                        <th>#</th>
                                         {% for title_detail in title_list %}
                                         <th>{{title_detail}}</th>
                                         {% endfor %}
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for device_data in device_list %}
-                                    <tr>
-                                        <td>{{ loop.index }}</td>
-                                        <td>{{device_data[0]}}</td>
-                                        <td><a href="{{url_for('devicedetail', id=loop.index)}}?{{search_params}}">{{device_data[1]}}</a></td>
-                                        {% for device_detail in device_data[2:] %}
+                                    <tr>                                   
+                                        {% for device_detail in  device_list %}
                                         <td>{{device_detail}}</td>
                                         {% endfor %}
                                     </tr>
-                                    {% endfor %}
                                 </tbody>
+                            </table> -->
+
+                            <table class="table table-hover table-sm">
+                                <tr>
+                                    <td>platform Id</td>
+                                    <td>{{device_detail.platformId}}</td>
+                                </tr>
+                                <tr>
+                                    <td>hostname</td>
+                                    <td>{{device_detail.hostname}}</td>
+                                </tr>
+                                <tr>
+                                    <td>associated Wlc Ip</td>
+                                    <td>{{device_detail.associatedWlcIp}}</td>
+                                </tr>
+                                <tr>
+                                    <td>management Ip</td>
+                                    <td>{{device_detail.managementIpAddress}}</td>
+                                </tr>
+                                <tr>
+                                    <td>family</td>
+                                    <td>{{device_detail.family}}</td>
+                                </tr>
+                                <tr>
+                                    <td>MacAddress</td>
+                                    <td>{{device_detail.macAddress}}</td>
+                                </tr>
+                                <tr>
+                                    <td>family</td>
+                                    <td>{{device_detail.family}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Location</td>
+                                    <td>{{device_detail.snmpLocation}}</td>
+                                </tr>
+                                <tr>
+                                    <td>serialNumber</td>
+                                    <td>{{device_detail.serialNumber}}</td>
+                                </tr>
+                                <tr>
+                                    <td>bootDateTime</td>
+                                    <td>{{device_detail.bootDateTime}}</td>
+                                </tr>
                             </table>
-                        </div>
-                        <div class="container-fluid">
-                            <div class="d-flex justify-content-center">
-                                <div class="mb-3">
-                                    <form class="form-inline" action="{{url_for('devicelist')}}" method="GET">
-                                        <div class="form-group">
-                                            <select class="form-control" id="category" name="category">
-                                                <option value="none">===선택===</option>
-                                                {% for title in title_list %}
-                                                <option value="{{title}}" {%if
-                                                    title==request.args.get("category") %} selected {% endif %}>
-                                                    {{title}}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            {% if request.args.get('keyword') == None %}
-                                            <input type="text" class="form-control" placeholder="Search" name="keyword">
-                                            {% else %}
-                                            <input type="text" class="form-control" placeholder="Search" name="keyword"
-                                                value="{{request.args.get('keyword')}}">
-                                            {% endif %}
-                                        </div>
-                                        <div class="form-group">
-                                            <button type="submit" class="btn btn-default">검 색</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                            <div>
-                                <a href="{{url_for('devicedownload')}}?{{search_params}}" class="btn btn-success btn-sm">excel</a>
-                            </div>
                         </div>
                     </div>
                 </div>
+                <a href="{{url_for('devicelist')}}?{{search_params}}" class="btn btn-secondary btn-sm">목록</a>
             </main>
         </div>
     </div>
