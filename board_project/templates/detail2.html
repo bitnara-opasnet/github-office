@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -75,39 +75,55 @@
             </nav>
 
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-                <div class="container-fluid">
-                    {% for row in rows %}
-                    <form method="POST" action="{{url_for('update', id=row.id)}}" enctype = "multipart/form-data">
+                <div class="container-fluid mb-2">
+                    <form method="POST">
                         <div class="form-group">
                             <label for="name"> 이름 </label>
-                            <input type="text" class="form-control" name="name" id="name" , value={{row.name}}>
+                            <input type="text" class="form-control" name="name" id="name" value={{board.name}} disabled>
                         </div>
                         <div class="form-group">
                             <label for="title"> 제목 </label>
-                            <input type="text" class="form-control" name="title" id="title" , value={{row.title}}>
+                            <input type="text" class="form-control" name="title" id="title" value={{board.title}} disabled>
                         </div>
                         <div class="from-group">
                             <label for="content"> 내용 </label>
-                            <textarea class="form-control" name="content" id="content" rows="5">{{row.content}}</textarea>
+                            <textarea class="form-control" name="content" id="content" rows="10" disabled>{{board.content}}</textarea>
                         </div>
+                        {% if board.image_name %} 
                         <div class="from-group">
-                            <label for="file"> 이미지 </label>
-                            <input type="file" class="form-control" name="file" id="file">
+                            <label for="file">  파일 </label><br>
+                            <input type="text" class="form-control" name="image" id="image" value={{board.image_name}} disabled>
                         </div>
-                        <!-- {% if row.image_name %}
-                        <div class="from-group">
-                            <label for="file"> 이미지 </label>
-                            <input type="file" class="form-control" name="file" id="file">
-                        </div>
-                        {% endif %} -->
-                        <br>
-                        <input type="hidden" name="category" id="category" value={{category}}>
-                        <input type="hidden" name="keyword" id="keyword" value={{keyword}}>
-                        <button type="submit" class="btn btn-secondary btn-sm">완 료</button>
-                        <!-- <a href='{{url_for("detail", id=row.id, page=page)}}{{search_params}}' class="btn btn-secondary btn-sm">뒤로가기</a> -->
-                        {% endfor %}
-                        <button id="go-back" class="btn btn-secondary btn-sm">뒤로 가기</button>
+                        {% endif %}
                     </form>
+                </div>
+
+                <div class="container-fluid">
+                    <a href="{{url_for('board', page = page)}}{{search_params}}" class="btn btn-secondary btn-sm">목록</a>
+                    <a href="{{url_for('update', id=board.id, page = page_url)}}{{search_params}}"
+                        class="btn btn-secondary btn-sm">수정</a>
+                    <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal"
+                        data-target="#exampleModalCenter">삭제</button>
+                    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+                        aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLongTitle">게시물 삭제</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    정말 삭제하시겠습니까?
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="{{url_for('delete', id=board.id)}}" class="btn btn-primary">삭제하기</a>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소하기</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>

@@ -1,34 +1,5 @@
-from numpy import broadcast
 import psutil
 import platform
-
-def get_hw_idle_info(): 
-    rst = dict() 
-
-    # CPU 데이터
-    cp = psutil.cpu_times_percent(interval=None, percpu=False) 
-    cp_item = dict()
-    cp_item['free'] = psutil.cpu_count(logical=False) * (cp.idle/100) # Physical
-    cp_item['idle'] = cp.idle
-    cp_item['desc'] = "Idle CPU: {} core ({:.1f})".format(cp_item['free'], cp_item['idle'])
-    rst['cpu'] = cp_item
-
-     # 메모리 데이터
-    vm = psutil.virtual_memory()
-    vm_item = dict()
-    vm_item['free'] = vm.available//(1024*1024)
-    vm_item['idle'] = vm.available/vm.total*100
-    vm_item['desc'] = "Idle Memory: {}MB ({:.2f}%)".format(vm_item['free'], vm_item['idle'])
-    rst['memory'] = vm_item
-
-    # 디스크 데이터
-    du = psutil.disk_usage(path='/') 
-    du_item = dict()
-    du_item['free'] = du.free//(1024*1024)
-    du_item['idle'] = du.free/du.total*100
-    du_item['desc'] = "Idle Disk: {}MB ({:.1f}%)".format(du_item['free'], du_item['idle'])
-    rst['disk'] = du_item
-    return rst
 
 def getLoad():
     cpu_result, mem_result, swap_result, disk_result, network_result = {}, {}, {}, {}, {}
@@ -98,6 +69,27 @@ def getplatform():
 
 def net_io():
     net = psutil.net_io_counters()
-    sent = net.bytes_sent/1024**2
-    recv = net.bytes_recv/1024**2
-    return round(sent, 2), round(recv, 2)
+    sent = str(round(net.bytes_sent/1024**2, 2)) + ' kbps'
+    recv = str(round(net.bytes_recv/1024**2,2)) + ' kbps'
+    return sent, recv
+
+def cpu_info():
+    cpu = psutil.cpu_times_percent()
+    count = psutil.cpu_count(logical=False)
+    idle = str(cpu.idle) + ' %'
+    freq = str(round(psutil.cpu_freq().current/1024, 2)) + ' GHz'
+    return freq, count, idle
+
+def swap_info():
+    swap = psutil.swap_memory()
+    total= '{:.2f} MB'.format(swap.total/1024**2)
+    used = '{:.2f} MB'.format(swap.used/1024**2)
+    free = '{:.2f} MB'.format(swap.free/1024**2)
+    return total, used, free
+
+def mem_info():
+    mem = psutil.virtual_memory()
+    total = '{:.2f} MB'.format(mem.total/1024**2)
+    used = '{:.2f} MB'.format(mem.used/1024**2)
+    free = '{:.2f} MB'.format(mem.available/1024**2)
+    return total, used, free

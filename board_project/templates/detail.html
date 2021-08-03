@@ -91,10 +91,10 @@
                             <textarea class="form-control" name="content" id="content" rows="10"
                                 disabled>{{row.content}}</textarea>
                         </div>
-                        {% if row.image_name %}
+                        {% if row.image_name %} 
                         <div class="from-group">
                             <label for="file"> 이미지 </label><br>
-                            <input type="text" class="form-control" name="image" id="image" value={{row.image_name}} disabled>
+                            <input type="text" class="form-control" name="image" id="image" value={{image}} disabled>
                             <!-- <input type="image" name="image" src="{{ url_for('static', filename = row.image_name)}}" disabled> -->
                         </div>
                         {% endif %}

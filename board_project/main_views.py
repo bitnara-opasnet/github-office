@@ -21,7 +21,7 @@ from lib.crawlingpkg.stock_crawling import stock_crawiling
 from lib.apipkg.get_token import get_auth_token
 from lib.apipkg.get_api import get_api_data, get_xml_data
 from lib.random_topology import get_topology_data, get_hostname
-from lib.sysinfo import getLoad, getplatform, net_io
+from lib.sysinfo import getLoad, getplatform, net_io, cpu_info, swap_info, mem_info
 from PIL import Image
 
 app = Flask(__name__)
@@ -59,7 +59,14 @@ def load_user(id):
 
 @app.route('/')
 def main():
-    return render_template('index.html')
+    username = session.get('username')
+    if username is None:
+        g.user = None
+        username = ''
+    else:
+        g.user = User.query.get(username)
+        username = '%s' % escape(session['username'])
+    return render_template('index.html', username=username)
     # return redirect(url_for('login'))
 
 @app.route('/register', methods=["POST", "GET"])
@@ -76,11 +83,14 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
     else:
-        username = request.form['username']
+        error = None
+        username = request.form['username'] 
         password = request.form['password']
         data = User.query.filter_by(username=username, password=password).first()
         if data is None:
-            return redirect(url_for('login'))
+            error = "Invalid username or password. Please try again!"
+            # return redirect(url_for('login'))
+            return render_template("login.html", error=error)
         else:
             session['username'] = request.form['username']
             login_user(data)
@@ -90,7 +100,7 @@ def login():
 def logout():
     session.pop('username', None)
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('main'))
 
 @app.route('/user')
 def user_detail():
@@ -124,36 +134,44 @@ def board():
     category=request.args.get('category')
     keyword=request.args.get('keyword')
     page_url = request.args.get('page')
-    limit = 5
+    limit = 7
     # print(page)
     if category and keyword:
         search_params = '&' + url_encode({'category':category, 'keyword':keyword}) #&category=title&keyword=abc
         if category == 'name': 
             boards = Board.query.filter(Board.name.contains(keyword)).order_by(Board.create_date.desc())
-            boards = boards.paginate(page=page, per_page=5)
+            boards = boards.paginate(page=page, per_page=limit)
         elif category == 'title':
             boards = Board.query.filter(Board.title.contains(keyword)).order_by(Board.create_date.desc())
-            boards = boards.paginate(page=page, per_page=5)
+            boards = boards.paginate(page=page, per_page=limit)
     else:
         search_params = ''
         boards = Board.query.order_by(Board.create_date.desc())
-        boards = boards.paginate(page=page, per_page=5)
+        boards = boards.paginate(page=page, per_page=limit)
     return render_template('list.html', rows=boards, page=page, limit=limit, page_url=page_url, search_params = search_params, category_list=category_list)
-
 
 # 게시판 내용 추가 (Create)
 @app.route('/add',methods=["POST", "GET"])
 @login_required
 def add():
     if request.method == "POST":
-        f = request.files['file']
-        sfname = '/image/'+str(secure_filename(f.filename))
-        f.save('./static'+ sfname)
-        image1 = Image.open('./static'+ sfname) 
-        imag1_size = image1.size
-        image1 = image1.resize((int(imag1_size[0]*(0.5)), int(imag1_size[1]*(0.5))))
-        imag1_size = image1.size
-        image1.save('./static'+ sfname)
+        if request.files['file'] :
+            f = request.files['file']
+            if f.filename.split('.')[1] in ['jpg', 'png']:
+                # sfname = '/image/'+str(secure_filename(f.filename))
+                # f.save('./static'+ sfname)
+                sfname = str(secure_filename(f.filename))
+                f.save('./static/image/'+ sfname)
+                # image1 = Image.open('./static'+ sfname) 
+                # imag1_size = image1.size
+                # image1 = image1.resize((int(imag1_size[0]*(0.5)), int(imag1_size[1]*(0.5))))
+                # imag1_size = image1.size
+                # image1.save('./static'+ sfname)
+            else:
+                sfname = str(secure_filename(f.filename))
+                f.save('./upload/'+ secure_filename(sfname))
+        else:
+            sfname = ''
         new_board = Board(name=request.form['name'], title=request.form['title'], content=request.form['content'], create_date=datetime.datetime.now(), image_name=sfname)
         db.session.add(new_board)
         db.session.commit()
@@ -170,8 +188,8 @@ def detail(id):
     search_params = '&' + url_encode({'category':category, 'keyword':keyword})
     row_id = id
     page = request.args.get('page')
-    board = Board.query.filter_by(id=row_id).all()
-    return render_template("detail.html", rows=board, page=page, search_params=search_params)
+    board = Board.query.filter_by(id=row_id).first()
+    return render_template("detail2.html", rows=board, page=page, search_params=search_params, board=board)
 
 #게시판 내용 갱신 (Update) 
 @app.route('/detail/<int:id>/update', methods=["GET","POST"])
@@ -183,16 +201,21 @@ def update(id):
     page=request.args.get('page')
     if request.method == "POST":
         row_id = id 
+        board = Board.query.filter_by(id=row_id).first()
         title = request.form["title"]
         content = request.form["content"]
-        f = request.files['file']
-        sfname = '/image/'+str(secure_filename(f.filename))
-        f.save('./static'+ sfname)
-        board = Board.query.filter_by(id=row_id).first()
+        if request.files['file'] :
+            f = request.files['file']
+            if f.filename.split('.')[1] in ['jpg', 'png']:
+                sfname = str(secure_filename(f.filename))
+                f.save('./static/image/'+ sfname)
+            else:
+                sfname = str(secure_filename(f.filename))
+                f.save('./upload/'+ secure_filename(f.filename))
+            board.image_name = sfname
         board.title = title
         board.content = content 
         board.create_date = datetime.datetime.now()
-        board.image_name = sfname
         db.session.commit()
         return redirect(url_for("board", page=page, keyword=keyword, category=category))
     else:  
@@ -572,10 +595,17 @@ def sysinfo():
 
 @app.route('/sysinfodata')
 def sysinfodata():
-    d = {'results':[]}
-    rst = net_io()
-    d['results'] = rst
-    return jsonify(d)
+    # sysinfodic = {'results':[]}
+    sysinfodic = {}
+    net_rst = net_io()
+    cpu_rst = cpu_info()
+    swap_rst = swap_info()
+    mem_rst = mem_info()
+    sysinfodic['net_rst'] = net_rst
+    sysinfodic['cpu_rst'] = cpu_rst
+    sysinfodic['swap_rst'] = swap_rst
+    sysinfodic['mem_rst'] = mem_rst
+    return jsonify(sysinfodic)
 
 @app.route('/sysinfo2')
 def sysinfo2():

@@ -1,6 +1,5 @@
-from get_api import get_auth_token, get_api_data
+from lib.get_api import get_auth_token, get_api_data, get_xml_data
 from get_device_random import random_data_create, device_devision
-from get_api import get_xml_data
 from get_random import random_data_create
 import xmltodict
 import json

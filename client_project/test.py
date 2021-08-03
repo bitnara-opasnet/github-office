@@ -1,5 +1,7 @@
+from requests.api import get
 from create_client import active_data_fromDB, get_macaddr, get_device_sample, create_active
-from get_api import get_xml_data
+from lib.get_api import get_json_data, get_xml_data, get_auth_token, get_api_data
+from lib.random_topology import get_hostname
 import xmltodict
 import json
 import re
@@ -278,3 +280,56 @@ if 'passed' in list(client_sample_data.keys()) :
     column_list = ['passed', 'failed', 'started', 'stopped']
 else:
     column_list = ['started', 'stopped']
+
+
+with open('physical-topology-demo1_15_30.json', 'r') as json_file:
+    json_data = json.load(json_file)
+
+random_num = random.randint(25, 30)
+# random_num = 28
+AP_node = []
+final_nodes = []
+for i in json_data['nodes']:
+    if i.get('group_name') == 'AP':
+        AP_node.append(i)
+    else:
+        final_nodes.append(i)
+
+random_AP = AP_node[0:random_num]
+for i in random_AP:
+   final_nodes.append(i) 
+
+len(json_data['nodes']) #전체 node의 개수 : 55
+len(AP_node) # AP의 개수 : 32 / 나머지 node의 개수 : 23
+len(random_AP) # 선택된 AP의 개수 : 28
+len(final_nodes) # 23 + 28 = 51
+
+id_list = []
+for i in final_nodes:
+    id_list.append(i.get('id'))
+
+final_links = []
+for i in json_data['links']:
+    if i.get('source') in id_list:
+        final_links.append(i)
+
+len(json_data['links']) # 전체 link의 개수 : 67
+len(final_links) # 선택된 link의 개수 : 63
+
+
+is_token = get_auth_token()['Token']
+json_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/topology/physical-topology')
+topology_data = json_data['response']
+for i in topology_data['nodes']:
+    get_hostname(i)
+ori_node = topology_data['nodes']
+
+
+with open('physical-topology-demo1_1.json', 'r') as json_file:
+    data1 = json.load(json_file)
+
+with open('physical-topology-demo1_0.json', 'r') as json_file:
+    data0 = json.load(json_file)
+
+data1_topology = data1['response']
+data0_topology = data0['response']

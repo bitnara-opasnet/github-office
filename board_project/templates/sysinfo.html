@@ -87,15 +87,18 @@
                                     <table class="table table-condensed table-sm">
                                         <tr>
                                             <td>frequency</td>
-                                            <td>{{cpu.freq}}</td>
+                                            <!-- <td>{{cpu.freq}}</td> -->
+                                            <td id=cpufreq></td>
                                         </tr>
                                         <tr>
                                             <td>cpu count</td>
-                                            <td>{{cpu.count}}</td>
+                                            <!-- <td>{{cpu.count}}</td> -->
+                                            <td id=cpucount></td>
                                         </tr>
                                         <tr>
                                             <td>cpu idle</td>
-                                            <td>{{cpu.idle}}</td>
+                                            <!-- <td>{{cpu.idle}}</td> -->
+                                            <td id=cpuidle></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -142,15 +145,18 @@
                                     <table class="table table-condensed table-sm">
                                         <tr>
                                             <td>total memory</td>
-                                            <td>{{swap.total}}</td>
+                                            <!-- <td>{{swap.total}}</td> -->
+                                            <td id=swaptotal></td>
                                         </tr>
                                         <tr>
                                             <td>used memory</td>
-                                            <td>{{swap.used}}</td>
+                                            <!-- <td>{{swap.used}}</td> -->
+                                            <td id=swapused></td>
                                         </tr>
                                         <tr>
                                             <td>free memory</td>
-                                            <td>{{swap.free}}</td>
+                                            <!-- <td>{{swap.free}}</td> -->
+                                            <td id=swapfree></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -165,15 +171,18 @@
                                     <table class="table table-condensed table-sm">
                                         <tr>
                                             <td>total memory</td>
-                                            <td>{{memory.total}}</td>
+                                            <!-- <td>{{memory.total}}</td> -->
+                                            <td id=memtotal></td>
                                         </tr>
                                         <tr>
                                             <td>used memory</td>
-                                            <td>{{memory.used}}</td>
+                                            <td id=memused></td>
+                                            <!-- <td>{{memory.used}}</td> -->
                                         </tr>
                                         <tr>
                                             <td>free memory</td>
-                                            <td>{{memory.free}}</td>
+                                            <td id=memfree></td>
+                                            <!-- <td>{{memory.free}}</td> -->
                                         </tr>
                                     </table>
                                 </div>
@@ -285,10 +294,28 @@
             datatype:"json",
             // async: false,
             success: function(data){
-                var sent = data.results[0];
-                var recv = data.results[1];
+                var sent = data.net_rst[0];
+                var recv = data.net_rst[1];
+                var cpufreq = data.cpu_rst[0];
+                var cpucount = data.cpu_rst[1];
+                var cpuidle = data.cpu_rst[2];
+                var swaptotal = data.swap_rst[0];
+                var swapused = data.swap_rst[1];
+                var swapfree = data.swap_rst[2];
+                var memtotal = data.mem_rst[0];
+                var memused = data.mem_rst[1];
+                var memfree = data.mem_rst[2];
                 $("#sentpkt").html(sent);
                 $("#recvpkt").html(recv);
+                $("#cpufreq").html(cpufreq);
+                $("#cpucount").html(cpucount);
+                $("#cpuidle").html(cpuidle);
+                $("#swaptotal").html(swaptotal);
+                $("#swapused").html(swapused);
+                $("#swapfree").html(swapfree);
+                $("#memtotal").html(memtotal);
+                $("#memused").html(memused);
+                $("#memfree").html(memfree);
             },
             error: function(){
                 console.log("error");
@@ -296,7 +323,7 @@
         })
     }
     // getpacketIO();
-    setInterval(getpacketIO, 5000);
+    setInterval(getpacketIO, 2000);
 </script>
 </body>
 

@@ -21,11 +21,14 @@
 <body>
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-4">
+            <div class="col-5">
                 <div class="card card-signin">
                     <article class="card-body">
                         <h4 class="card-title text-center mb-4 mt-1">LOGIN</h4>
                         <hr>
+                        {% if error %}
+                        <p>{{error}}</p>
+                        {% endif %}
                         <form method="POST" class="form-signin">
                             <div class="form-group">
                                 <label for="username"> 이름 </label>

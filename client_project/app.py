@@ -1,7 +1,7 @@
 from active_DB import active_DB
 import xmltodict
 from flask import Flask, Response
-from get_api import get_xml_data
+from lib.get_api import get_xml_data
 from create_client import get_device_sample
 from active_DB import active_DB
 from test_def import create_active, get_macaddr

@@ -30,7 +30,7 @@
         <div class="inner">
           <nav class="nav nav-masthead justify-content-center">
             <a class="nav-link active" href="/board">Board</a>
-            <a class="nav-link" href="/stock">Stock</a>
+            <a class="nav-link" href="/stock2">Stock</a>
             <a class="nav-link" href="/device_list">Device</a>
           </nav>
         </div>
@@ -38,16 +38,24 @@
 
       <main role="main" class="inner cover">
         <h1 class="cover-heading">Bitnara's Flask Page</h1>
+        {% if username == '' %}
         <p class="lead">Please login</p>
         <p class="lead">
           <a href="{{url_for('register')}}" class="btn btn-secondary mt-2">회원가입</a>
           <a href="{{url_for('login')}}" class="btn btn-secondary mt-2">로그인</a>
         </p>
+        {% else%}
+        <p class="lead"> Hello, {{username}}</p>
+        <p class="lead">
+            <a href="{{url_for('logout')}}" class="btn btn-secondary mt-2">로그아웃</a>
+            <a href="{{url_for('board')}}" class="btn btn-secondary mt-2">Board</a>
+        </p>
+        {% endif %}
       </main>
 
       <footer class="mastfoot mt-auto">
         <div class="inner">
-          <p>Cover template for <a href="https://getbootstrap.com/">Bootstrap</a>, by <a href="#">@bitnara</a>.</p>
+          <p>Cover template for <a href="https://getbootstrap.com/">Bootstrap</a>, by <a href="#">bitnara@opasnet.co.kr</a>.</p>
         </div>
       </footer>
     </div>

@@ -25,6 +25,7 @@ def savedata(title, data):
     with open(title, 'w', encoding='utf-8') as outfile:
         json.dump(data, outfile, indent=4, ensure_ascii=False)
 
+# def cliapicall():
 parser = argparse.ArgumentParser()
 # parser.add_argument('method', metavar='http_method', help='{GET|POST|PUT|DELETE}', choices=['GET', 'POST', 'PUT', 'DELETE'])
 parser.add_argument('url', metavar='url', type=str, help='API url')
@@ -43,3 +44,4 @@ if args.save:
     print('save file in directory')
 else:
     print(data)
+

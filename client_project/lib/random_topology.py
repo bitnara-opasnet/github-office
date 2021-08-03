@@ -2,25 +2,36 @@ import json
 import ipaddress
 import random
 import copy
+from lib.get_api import get_auth_token, get_api_data
 
 def get_hostname(data):
     if data.get('family') == 'Unified AP' and data.get('role') == 'ACCESS' :
-        result = 'AP'
+        data['group_name'] = 'AP'
+        data['group'] = '4'
     elif data.get('family') == 'Switches and Hubs' and data.get('role') == 'ACCESS' :
-        result = 'Edge'
+        data['group_name'] = 'Edge'
+        data['group'] = '3'
     elif data.get('family') == 'Switches and Hubs' and data.get('role') == 'DISTRIBUTION' :
-        result = 'Border'
+        data['group_name'] = 'Border'
+        data['group'] = '2'
     elif data.get('family') == 'Switches and Hubs' and data.get('role') == 'CORE' :
-        result = 'Border'
+        data['group_name'] = 'Border'
+        data['group'] = '2'
     elif data.get('family') == 'Switches and Hubs' and data.get('role') == 'BORDER ROUTER' :
-        result = 'Border'
+        data['group_name'] = 'Border'
+        data['group'] = '2'
     elif data.get('family') == 'Routers' and data.get('role') == 'BORDER ROUTER' :
-        result = 'Router'
+        data['group_name'] = 'Fusion'
+        data['group'] = '1'
     elif data.get('family') == 'Wireless Controller' and data.get('role') == 'ACCESS':
-        result = 'WLC'
+        data['group_name'] = 'WLC'
+        data['group'] = '5'
+    elif data.get('family') == 'cloud node' and data.get('role') == 'cloud node':
+        data['group_name'] = 'Internet'
+        data['group'] = '0'
     else:
-        result = 'UNKNOWN'
-    return result
+        data['group_name'] = 'UNKNOWN'
+        data['group'] = '0'
 
 # ip 생성 
 def get_last_ip(node_data, group_name):
@@ -45,7 +56,7 @@ def get_hostip_list(ap_ip, cidr, num):
 
 #mac address 생성
 def get_mac_addr():
-    count = 4
+    count = 6
     mac_sample = '7c:21:0d:9f:0a:24'
     str_pool = 'abcdefgqrstuvwxyz1234567890hijklmnop'
     res = ''
@@ -208,7 +219,7 @@ def ap_link_create(new_node_data, link_data, Edge_node, total_num, div_num1, div
         final_links.append(random_dic1) 
     return(final_links) 
 
-def get_topology_data():
+def get_topology_data(num):
     with open('physical-topology-demo1.json', 'r') as json_file:
         json_data = json.load(json_file)
 
@@ -221,12 +232,13 @@ def get_topology_data():
     for i in Edge_links:
         final_links.append(i)
 
-    AP_node = random_node_create(ori_node, 'AP', '/24', 9509, 30)
+    random_num = num
+    AP_node = random_node_create(ori_node, 'AP', '/24', 9509, random_num)
     for i in AP_node:
         final_nodes.append(i)
 
     ap_node_list = new_node_list(ori_node, final_nodes)
-    ap_links = ap_link_create(ap_node_list, final_links, Edge_node, 30, 5, 10, 20)
+    ap_links = ap_link_create(ap_node_list, final_links, Edge_node, random_num, 5, 10, 20)
 
     for i in Edge_node:
         final_nodes.append(i)
@@ -234,7 +246,182 @@ def get_topology_data():
         final_links.append(i)
 
     final_dict = dict({'links' : final_links, 'nodes' : final_nodes})
-    # with open('physical-topology-demo1_15_30.json', 'w') as outfile:
-    #     json.dump(final_dict, outfile, indent=4)
-
+    with open('physical-topology-demo1_15_30.json', 'w') as outfile:
+        json.dump(final_dict, outfile, indent=4)
     return final_dict
+
+def dna_topology_data(num):
+    is_token = get_auth_token()['Token']
+    json_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/topology/physical-topology')
+    topology_data = json_data['response']
+
+    for i in topology_data['nodes']:
+        get_hostname(i)
+        i['reachabilityStatus'] = 'reachable'
+    
+    for i in topology_data['links']:
+        i['value'] = '1'
+        i['count'] = 1
+        i['portbpsdata'] = {}
+        i['usage'] = "[0/0]Mbps"
+
+        
+    ori_node = topology_data['nodes']
+    final_nodes = topology_data['nodes'][:]
+    final_links = topology_data['links'][:]
+
+    Edge_node = random_node_create(ori_node, 'Edge', '/24', 1000, 15)
+    Edge_links = edge_link_create(Edge_node, final_links, 15, 10)
+    for i in Edge_links:
+        final_links.append(i)
+
+    random_num = num
+    AP_node = random_node_create(ori_node, 'AP', '/24', 9509, random_num)
+    for i in AP_node:
+        final_nodes.append(i)
+
+    ap_node_list = new_node_list(ori_node, final_nodes)
+    ap_links = ap_link_create(ap_node_list, final_links, Edge_node, random_num, 5, 10, 20)
+
+    for i in Edge_node:
+        final_nodes.append(i)
+    for i in ap_links:
+        final_links.append(i)
+
+    final_dict = dict({'response' : {'links' : final_links, 'nodes' : final_nodes}, 'version':'1.0'})
+    # with open('physical-topology-demo1_0.json', 'w') as outfile:
+    #     json.dump(final_dict, outfile, indent=4)
+    return final_dict
+
+def get_random_topology(num):
+    with open('physical-topology-demo1_15_30.json', 'r') as json_file:
+        json_data = json.load(json_file)
+    topology_data = json_data['response']
+
+    random_num = num
+    AP_node = []
+    final_nodes = []
+    for i in topology_data['nodes']:
+        if i.get('group_name') == 'AP':
+            AP_node.append(i)
+        else:
+            final_nodes.append(i)
+
+    random_AP = AP_node[0:random_num]
+    for i in random_AP:
+        final_nodes.append(i) 
+
+    id_list = []
+    for i in final_nodes:
+        id_list.append(i.get('id'))
+
+    final_links = []
+    for i in topology_data['links']:
+        if i.get('source') in id_list:
+            final_links.append(i)
+    
+    final_dict = dict({'response' : {'links' : final_links, 'nodes' : final_nodes}, 'version':'1.0'})
+    return final_dict
+
+def get_random_topology1(params):
+    with open('physical-topology-demo1_15_30.json', 'r') as json_file:
+        json_data = json.load(json_file)
+    topology_data = json_data['response']
+    index_list = []
+    if params == 1:
+        for i in range(len(topology_data['nodes'])):
+            if topology_data['nodes'][i].get('id') == '30015a66-1fb6-452b-8504-f0990f8a9510':
+                index_list.append(i)
+        for i in range(len(topology_data['links'])):
+            if topology_data['links'][i].get('source') == '30015a66-1fb6-452b-8504-f0990f8a9510':
+                index_list.append(i)
+        del topology_data['nodes'][index_list[0]]
+        del topology_data['links'][index_list[1]]
+    else:
+        pass
+    final_dict = dict({'response' : topology_data, 'version':'1.0'})
+    return final_dict
+
+def get_random_topology2(params):
+    with open('physical-topology-demo1_1.json', 'r') as json_file:
+        data1 = json.load(json_file)
+
+    with open('physical-topology-demo1_0.json', 'r') as json_file:
+        data0 = json.load(json_file)
+
+    if params ==1:
+        final_dict = data1
+    else:
+        final_dict = data0
+    return final_dict
+
+def get_random_link(new_node_data, div_num):
+    new_node_list = new_node_data
+    link_n1 = increase_num(100000)
+    link_n2 = increase_num(200000)
+    random_link = []
+    for i in range(len(new_node_data)):
+        if i < div_num:
+            random_link.append([new_node_list[i].get('id'), str(next(link_n1))])
+        else:
+            random_link.append([new_node_list[i].get('id'), str(next(link_n2))])
+    return random_link
+
+def get_ap_link(new_node_data, link_list):
+    ap_links = get_random_link(new_node_data, 1)
+    for i in link_list:
+        if i.get('source') == '28975461-7826-4cac-b9f6-88aa9e5e3f3f':
+            ori_link_one = i 
+    ori_link_one = copy.deepcopy(ori_link_one)
+    new_links = []
+    for i in range(len(ap_links)):
+        ori_link_one.update({'id':ap_links[i][1], 'source':ap_links[i][0]})
+        random_dic1 = dict(ori_link_one.items()) 
+        new_links.append(random_dic1) 
+    return new_links
+
+def get_random_topology3(params, ap_num, rechable, unrechable_num=0):
+    is_token = get_auth_token()['Token']
+    json_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/topology/physical-topology')
+    topology_data = json_data['response']
+    for i in topology_data['nodes']:
+        get_hostname(i)
+        i['reachabilityStatus'] = 'reachable'
+
+    ori_node = topology_data['nodes']
+    final_nodes = topology_data['nodes'][:]
+    final_links = topology_data['links'][:]
+    AP_node = random_node_create(ori_node, 'AP', '/24', 9509, ap_num)
+    for i in AP_node:
+        final_nodes.append(i)
+
+    # Edge_node = []
+    # for i in ori_node:
+    #     if i.get('group_name') == 'Edge':
+    #         Edge_node.append(i)
+    
+    # Edge_node = random_node_create(ori_node, 'Edge', '/24', 1000, 15)
+    # Edge_links = edge_link_create(Edge_node, final_links, 15, 10)
+    # for i in Edge_links:
+    #     final_links.append(i)
+    # for i in Edge_node:
+    #     final_nodes.append(i)
+
+    ap_node_list = new_node_list(ori_node, final_nodes)
+    new_links = get_ap_link(ap_node_list, final_links)
+
+    for i in new_links:
+        final_links.append(i)
+    
+    if rechable == 'N':
+        for i in range(unrechable_num):
+            final_links[i].update({'linkStatus' : '1up'})
+            final_nodes[i].update({'reachabilityStatus':'1reachable'})
+    else:
+        pass
+    final_dict = dict({'response' : {'links' : final_links, 'nodes' : final_nodes}, 'version':'1.0'})
+
+    if params == 1:
+        return final_dict
+    else:
+        return json_data
