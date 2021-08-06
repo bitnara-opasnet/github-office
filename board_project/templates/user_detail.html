@@ -24,7 +24,7 @@
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
         <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
-        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Bitnara's Hompage</a>
         <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
         <ul class="navbar-nav d-flex flex-row">
             <li class="nav-item text-nowrap mr-3">
@@ -66,6 +66,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{url_for('sysinfo')}}"> 
                                 <i class="fa fa-info" aria-hidden="true"></i> system info
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('live_resource')}}"> 
+                                <i class="fas fa-chart-line"></i> system live reourece
                             </a>
                         </li>
                     </ul>

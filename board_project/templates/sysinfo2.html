@@ -26,7 +26,7 @@
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
         <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
-        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Bitnara's Hompage</a>
         <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
         <ul class="navbar-nav d-flex flex-row">
             <li class="nav-item text-nowrap mr-3">
@@ -70,43 +70,40 @@
                                 <i class="fa fa-info" aria-hidden="true"></i> system info
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('live_resource')}}"> 
+                                <i class="fas fa-chart-line"></i> system live reourece
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
 
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-                <div>
-                    <span id=sentpkt></span>
-                    <span id=recvpkt></span>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="container-fluid" id="container"></div>
+                    </div>
                 </div>
+                <figure class="highcharts-figure">
+                    <div class="row">
+                        <div class="container-fluid" id="gauge-container"></div>
+                    </div>
+                </figure>
             </main>
         </div>
     </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script>
-    var endpointurl = "{{url_for('sysinfodata')}}";
-    console.log(endpointurl);
-    function getpacketIO(){
-        $.ajax({
-            type: "GET",
-            url: endpointurl,
-            datatype:"json",
-            // async: false,
-            success: function(data){
-                var sent = data.results[0];
-                var recv = data.results[1];
-                $("#sentpkt").html(sent);
-                $("#recvpkt").html(recv);
-            },
-            error: function(){
-                console.log("error");
-            }
-        })
-    }
-    // getpacketIO();
-    setInterval(getpacketIO, 1000);
-</script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
+<script src="https://code.highcharts.com/modules/solid-gauge.js"></script>
+<script src="https://code.highcharts.com/modules/series-label.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="/static/js/highcharts.js"></script>
+<script src="/static/js/gaugechart.js"></script>
 </body>
 
 </html>

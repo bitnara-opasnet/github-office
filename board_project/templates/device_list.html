@@ -26,7 +26,7 @@
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
         <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
-        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Bitnara's Hompage</a>
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Bitnara's Hompage</a>
         <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
         <ul class="navbar-nav d-flex flex-row">
             <li class="nav-item text-nowrap mr-3">
@@ -56,18 +56,23 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/device_list"> 
+                            <a class="nav-link" href="/device_list">
                                 <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url_for('getTopology')}}"> 
+                            <a class="nav-link" href="{{url_for('getTopology')}}">
                                 <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url_for('sysinfo')}}"> 
+                            <a class="nav-link" href="{{url_for('sysinfo')}}">
                                 <i class="fa fa-info" aria-hidden="true"></i> system info
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('live_resource')}}">
+                                <i class="fas fa-chart-line"></i> system live reourece
                             </a>
                         </li>
                     </ul>
@@ -93,7 +98,9 @@
                                     <tr>
                                         <td>{{ loop.index }}</td>
                                         <td>{{device_data[0]}}</td>
-                                        <td><a href="{{url_for('devicedetail', id=loop.index)}}?{{search_params}}">{{device_data[1]}}</a></td>
+                                        <td><a
+                                                href="{{url_for('devicedetail', id=loop.index)}}?{{search_params}}">{{device_data[1]}}</a>
+                                        </td>
                                         {% for device_detail in device_data[2:] %}
                                         <td>{{device_detail}}</td>
                                         {% endfor %}
@@ -110,8 +117,8 @@
                                             <select class="form-control" id="category" name="category">
                                                 <option value="none">===선택===</option>
                                                 {% for title in title_list %}
-                                                <option value="{{title}}" {%if
-                                                    title==request.args.get("category") %} selected {% endif %}>
+                                                <option value="{{title}}" {%if title==request.args.get("category") %}
+                                                    selected {% endif %}>
                                                     {{title}}</option>
                                                 {% endfor %}
                                             </select>
@@ -131,14 +138,158 @@
                                 </div>
                             </div>
                             <div>
-                                <a href="{{url_for('devicedownload')}}?{{search_params}}" class="btn btn-success btn-sm">excel</a>
+                                <a href="{{url_for('devicedownload')}}?{{search_params}}"
+                                    class="btn btn-success btn-sm">excel</a>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div id="container"></div>
             </main>
         </div>
     </div>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script>
+    function pieChart() {
+        var chart1 = {{chart | safe }};
+            ID = Object.keys(chart1);
+        var colors = Highcharts.getOptions().colors;
+        console.log(ID)
+        Highcharts.setOptions({
+            colors: ['#d470cc', '#3f77cb']
+        });
+        // Set up the chart
+        var chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'container',
+                type: 'pie',
+                margin: [0, 5, 5, 5],
+                spacingRight: 0,//차트 우측 여백 지정(default 10)
+                style: {
+                    color: '#444',
+                    fontFamily: 'notoSans',
+                    fontWeight: '400',
+                },
+                backgroundColor: 'rgba(255, 255, 255, 0)'
+            },
+            credits: { enabled: false }, //highchart 워터마크 숨김처리
+            title: {
+                text: '',
+            },
+            legend: {
+                layout: 'vertical로',//범례 세로 정렬 시 vertical로 지정.(default horizontal)
+                align: 'right',
+                verticalAlign: 'middle',
+                x: -4,
+                y: -2,
+                itemMarginTop: 10,//범례 margin top 지정(bottom도 존재.)
+                itemMarginBottom: 10,
+                symbolHeight: 10,
+                symbolWidth: 10,
+                symbolPadding: 5,
+                symbolRadius: 0,
+                itemStyle: {
+                    color: '#444',
+                    fontSize: '14px',
+                    fontWeight: 'normal'
+                }
+            },
+            plotOptions: {
+                pie: {
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        distance: -20,
+                    },
+                    showInLegend: true 
+                },
+            },
+            series: [{
+                name:'ID',
+                colorByPoint: true,
+                type: 'pie',
+                // innerSize: '50%', //도넛 차트 지정시 내부 구멍 너비를 설정(설정 안하면 기본 파이 차트)
+                data: [
+                    {
+                        name: ID[0],
+                        y: chart1[ID[0]],
+                        color: colors[0],
+                        dataLabels: {
+                            y: -35,
+                            x: 25,
+                            // color: '#d470cc',
+                        }
+                    },
+                    {
+                        name: ID[1],
+                        y: chart1[ID[1]],
+                        color: colors[1],
+                        dataLabels: {
+                            // color: '#3f77cb',
+                        }
+                    },
+                    {
+                        name: ID[2],
+                        y: chart1[ID[2]],
+                        color: colors[2],
+                        dataLabels: {
+                            // color: '#3f77cb',
+                        }
+                    },
+                    {
+                        name: ID[3],
+                        y: chart1[ID[3]],
+                        color: colors[3],
+                        dataLabels: {
+                            // color: '#3f77cb',
+                        }
+                    },
+                    {
+                        name: ID[4],
+                        y: chart1[ID[4]],
+                        color: colors[4],
+                        dataLabels: {
+                            // color: '#3f77cb',
+                        }
+                    },
+                    {
+                        name: ID[5],
+                        y: chart1[ID[5]],
+                        color: colors[5],
+                        dataLabels: {
+                            // color: '#3f77cb',
+                        }
+                    },
+                    {
+                        name: ID[6],
+                        y: chart1[ID[6]],
+                        color: colors[6],
+                        dataLabels: {
+                            // color: '#3f77cb',
+                        }
+                    }
+                ],
+                dataLabels: {
+                    enabled: true,
+                    format: '<span class="d-label">{point.name}</span> : {y}',//label의 포맷을 "데이터 명 : y"로 지정해서 사용.
+                    align: 'center',
+                    // 세로 위치 지정
+                    // y: -30,
+                    // x: -40,
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: '400'
+                    }
+                }
+            }]
+        });
+    }
+pieChart()
+</script>
 </body>
 
 </html>

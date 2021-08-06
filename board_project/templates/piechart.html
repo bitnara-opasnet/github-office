@@ -1,0 +1,111 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>실시간 절전율</title>
+    <link rel="stylesheet" href="http://jquery-ui.googlecode.com/svn/tags/1.8.19/themes/ui-lightness/jquery.ui.all.css"
+        type="text/css" media="screen" title="no title" charset="utf-8" />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <style type="text/css">
+        div#container {
+            width: 500px;
+            height: 400px;
+            margin: auto
+        }
+
+        div#button_box {
+            width: 100%;
+            margin: auto;
+            text-align: center
+        }
+
+        button {
+            margin: 0px 20px
+        }
+
+        .playing {
+            border: 1px solid #FF0000
+        }
+    </style>
+    <script type="text/javascript">
+        var chart;
+        var temp;
+        $(function () { // 버튼을 jQuery UI를 통해서 디자인 변경 
+            $("button.start").button({ icons: { primary: "ui-icon-play" }, text: true });
+            $("button.stop").button({ icons: { primary: "ui-icon-stop" }, text: true });
+            $(document).ready(function () {
+                chart = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'container',
+                        plotBackgroundColor: null,
+                        plotBorderWidth: null,
+                        plotShadow: false
+                    },
+                    title: {
+                        text: '실시간 절전율 비교기'
+                    },
+                    tooltip: {
+                        formatter: function () {
+                            return '<b>' + this.point.name + '</b>: ' + this.y + 'W';
+                        }
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                color: '#000000',
+                                connectorColor: '#000000',
+                                formatter: function () {
+                                    return '<b>' + this.point.name + '</b>: ' + this.y + 'W';
+                                }
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'pie',
+                        name: 'Browser share',
+                        data: [[
+                            '사용량', Math.round(Math.random() * 10, 3) + 30],
+                        { name: '절전량', y: Math.round(Math.random() * 10, 3) + 20, sliced: true, selected: true },
+                        ['직접끔', Math.round(Math.random() * 10, 3) + 10]]
+                    }],
+                    colors: ['#DDDDDD', '#89C54E', '#92A8CD']
+                });
+            });
+        });
+        function start() {
+            $("#container").addClass("playing");
+            var series = chart.series[0];
+            temp = setTimeout(function () {
+                series.addPoint({
+                    name: '사용량', y: Math.round(Math.random() * 10) + 30, color: '#DDDDDD'
+                }, false, true, false);
+                series.addPoint({
+                    name: '절전량', y: Math.round(Math.random() * 10) + 20,
+                    sliced: true, selected: true, color: '#89C54E'
+                }, false, true, false);
+                series.addPoint({ name: '직접끔', y: Math.round(Math.random() * 10) + 10, color: '#92A8CD' }, true, true, false); start();
+            }, 1000);
+        }
+        function stop() {
+            $("#container").removeClass("playing"); clearTimeout(temp);
+        }
+    </script>
+</head>
+
+<body>
+    <div id="container">
+        <div id="button_box">
+            <button class="start" onclick="start();" alt="매 1초마다 데이터를 변경합니다.">Auto Start</button>
+            <button class="stop" onclick="stop();" alt="중단합니다">Stop</button>
+        </div>
+    </div>
+</body>
+
+</html>

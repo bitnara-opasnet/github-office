@@ -1,5 +1,6 @@
 import psutil
 import platform
+from time import time
 
 def getLoad():
     cpu_result, mem_result, swap_result, disk_result, network_result = {}, {}, {}, {}, {}
@@ -69,15 +70,15 @@ def getplatform():
 
 def net_io():
     net = psutil.net_io_counters()
-    sent = str(round(net.bytes_sent/1024**2, 2)) + ' kbps'
-    recv = str(round(net.bytes_recv/1024**2,2)) + ' kbps'
+    sent = str(round(net.bytes_sent/1024**2, 2)) + ' Mbps'
+    recv = str(round(net.bytes_recv/1024**2,2)) + ' Mbps'
     return sent, recv
 
 def cpu_info():
     cpu = psutil.cpu_times_percent()
     count = psutil.cpu_count(logical=False)
     idle = str(cpu.idle) + ' %'
-    freq = str(round(psutil.cpu_freq().current/1024, 2)) + ' GHz'
+    freq = str(round(psutil.cpu_freq().current/1024, 2)) + ' GHz' # cpu 동작 속도 (초당 클럭)
     return freq, count, idle
 
 def swap_info():

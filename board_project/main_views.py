@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from platform import platform
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, g, send_file, escape
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, g, send_file, escape, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_paginate import Pagination, get_page_parameter
 from flask_migrate import Migrate
@@ -12,6 +12,8 @@ import sqlite3
 import json
 import datetime
 import requests
+import psutil
+from time import time
 import pandas as pd
 from datetime import timedelta
 from werkzeug.urls import url_encode
@@ -75,7 +77,9 @@ def register():
         usertable = User(username=request.form['username'], email=request.form['email'], password=request.form['password']) 
         db.session.add(usertable) 
         db.session.commit() 
-        return render_template("registered.html") 
+        session['username'] = request.form['username']
+        username = '%s' % escape(session['username'])
+        return render_template("registered.html", username=username) 
     return render_template("register.html")
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -233,31 +237,6 @@ def delete(id):
     db.session.commit()
     return redirect(url_for("board")) 
 
-# 검색하기
-@app.route('/search', methods=["GET","POST"])
-@login_required
-def search(): 
-    category_list = ['name', 'title']
-    page=request.args.get(get_page_parameter(), type=int, default=1)
-    category=request.args.get('category')
-    keyword=request.args.get('keyword')
-    page_url = request.args.get('page')
-    limit = 5
-    # boards = Board.query.all()
-    if category and keyword:
-        search_params = '&' + url_encode({'category':category, 'keyword':keyword}) 
-        if category == 'name': 
-            boards = Board.query.filter(Board.name.contains(keyword)).order_by(Board.create_date.desc())
-            boards = boards.paginate(page=page, per_page=5)
-        elif category == 'title':
-            boards = Board.query.filter(Board.title.contains(keyword)).order_by(Board.create_date.desc())
-            boards = boards.paginate(page=page, per_page=5)
-    else:
-        search_params = ''
-        boards = Board.query.order_by(Board.create_date.desc())
-        boards = boards.paginate(page=page, per_page=5)
-    return render_template('search.html', rows=boards, page=page, limit=limit, page_url=page_url, search_params = search_params, category_list=category_list, keyword=keyword)
-
 #문의 게시판
 @app.route('/support', methods=["POST", "GET"])
 @login_required
@@ -298,35 +277,27 @@ def user_api():
 
 @app.route('/board/download')
 @login_required
-def download():
+def download(): 
+    now = datetime.datetime.now().strftime('%Y%m%d')
+    category=request.args.get('category')
+    keyword=request.args.get('keyword')
     conn = sqlite3.connect('board.db')
-    cur = conn.cursor()
-    cur.execute("select * from board;")
+    cur = conn.cursor() 
+    if category and keyword :
+        if category == 'name':
+            cur.execute("select * from board where name like '%{}%';".format(keyword)) 
+        elif category == 'title':
+            cur.execute("select * from board where title like '%{}%';".format(keyword)) 
+    else:
+        cur.execute("select * from board;")
     table_col = [desc[0] for desc in cur.description]
     rows = cur.fetchall()
     table_data = []
     for i in rows:
         table_data.append(list(i))
     table_data = tuple(table_data)
-    make_workbook.make_workbook('board_list.xlsx', table_col, table_data)
-    return send_file('board_list.xlsx', attachment_filename='board_list.xlsx', as_attachment=True)
-
-@app.route('/stock')
-@login_required
-def stock():
-    conn = sqlite3.connect("stock.db")
-    cur = conn.cursor()
-    cur.execute("select * from stock;") 
-    title = [desc[0] for desc in cur.description]
-    rows = cur.fetchall()
-    stock_list = []
-        # for i in rows:
-        #     stock_data.append(dict(zip(title,i)))
-    for i in rows:
-        stock_list.append(i)
-    cur.close()
-    conn.close()
-    return render_template("device_detail.html", title=title, stock_list=stock_list)
+    make_workbook.make_workbook('board_list_{}.xlsx'.format(now), table_col, table_data)
+    return send_file('board_list_{}.xlsx'.format(now), attachment_filename='board_list_{}.xlsx'.format(now), as_attachment=True)
 
 @app.route('/stock2')
 @login_required
@@ -461,7 +432,7 @@ def devicelist():
                         imsi_list.append(i.get(k))
             device_list.append(imsi_list)
         device_list = list(filter(None, device_list))
-        device_list = tuple(device_list)
+        # device_list = tuple(device_list)
  
     else:
         search_params = ''
@@ -471,9 +442,14 @@ def devicelist():
             for j in title_list:
                 imsi_list.append(i.get(j))
             device_list.append(imsi_list)
-        device_list = tuple(device_list)
-
-    return render_template("device_list.html", device_list=device_list, search_params=search_params, title_list=title_list)
+        # device_list = tuple(device_list)
+    
+    df = pd.DataFrame(device_list, columns=title_list)
+    chart_df = df.groupby('platformId').size().reset_index(name='count')
+    chart = {}
+    for i in range(len(chart_df['platformId'])):
+        chart.update({chart_df['platformId'][i] : chart_df['count'][i]})
+    return render_template("device_list.html", device_list=device_list, search_params=search_params, title_list=title_list, chart=chart)
 
 @app.route('/device_list/download')
 @login_required
@@ -568,11 +544,13 @@ def page_not_found(error):
     return "<h1> 404 error</h1>", 404
 
 @app.route('/dna/intent/api/v1/topology/physical-topology')
+@login_required
 def getTopology():
     final_dict = get_topology_data() 
     return jsonify(final_dict)
 
 @app.route('/sysinfo')
+@login_required
 def sysinfo():
     final_dict = getLoad()
     cpu = final_dict.get('cpu')
@@ -594,6 +572,7 @@ def sysinfo():
     return render_template("sysinfo.html", cpu=cpu, memory=memory, swap=swap, disks=disks, plat=plat, net_list=net_list, networks=networks)
 
 @app.route('/sysinfodata')
+@login_required
 def sysinfodata():
     # sysinfodic = {'results':[]}
     sysinfodic = {}
@@ -607,6 +586,32 @@ def sysinfodata():
     sysinfodic['mem_rst'] = mem_rst
     return jsonify(sysinfodic)
 
-@app.route('/sysinfo2')
-def sysinfo2():
-    return render_template("sysinfo2.html")
+@app.route('/liveresource')
+@login_required
+def live_resource():
+    return render_template("sysinfo2.html") 
+
+@app.route('/sysinfodata2')
+@login_required
+def sysinfodata2(): 
+    cpu = psutil.cpu_times_percent()
+    idle = cpu.idle
+    net = psutil.net_io_counters()
+    sent = [time() * 1000, round(net.bytes_sent/1024, 2)]
+    recv = [time() * 1000, round(net.bytes_recv/1024, 2)]
+    data = {'sent':sent, 'recv':recv}
+    # response = make_response(json.dumps(data))
+    # response.content_type = 'application/json'
+    # return response
+    return jsonify(data)
+
+@app.route('/sysinfodata3')
+@login_required
+def sysinfodata3(): 
+    cpu = psutil.cpu_times_percent()
+    idle = cpu.idle
+    data = {'idle':idle}
+    # response = make_response(json.dumps(data))
+    # response.content_type = 'application/json'
+    # return response
+    return jsonify(data)

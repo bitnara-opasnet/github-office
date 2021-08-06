@@ -63,12 +63,17 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{url_for('getTopology')}}"> 
-                                <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
+                                <i class="fab fa-connectdevelop"></i> Topology
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{url_for('sysinfo')}}"> 
                                 <i class="fa fa-info" aria-hidden="true"></i> system info
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('live_resource')}}"> 
+                                <i class="fas fa-chart-line"></i> system live reourece
                             </a>
                         </li>
                     </ul>
@@ -138,7 +143,7 @@
                                 </form>
                             </div>
                             <div>
-                                <a href="{{url_for('download')}}" class="btn btn-success btn-sm">excel</a>
+                                <a href="{{url_for('download')}}?{{search_params}}" class="btn btn-success btn-sm">excel</a>
                             </div>
                         </div>
                     </div>
