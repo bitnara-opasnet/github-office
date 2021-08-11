@@ -24,25 +24,22 @@
             <div class="col-5">
                 <div class="card card-signin">
                     <article class="card-body">
-                        <h4 class="card-title text-center mb-4 mt-1">LOGIN</h4>
+                        <h4 class="card-title text-center mb-4 mt-1">아이디 찾기</h4>
                         <hr>
                         {% if error %}
                         <p>{{error}}</p>
                         {% endif %}
                         <form method="POST" class="form-signin">
                             <div class="form-group">
-                                <label for="username"> 이름 </label>
-                                <input type="text" class="form-control" name="username" id="username"
-                                    placeholder="username">
+                                <label for="phone"> 전화번호 </label>
+                                <input type="text" class="form-control" name="phone" id="phone" placeholder="phone number">
                             </div>
                             <div class="from-group">
-                                <label for="password"> 비밀번호 </label>
-                                <input type="password" class="form-control" name="password" id="password"
-                                    placeholder="password">
+                                <label for="email"> 이메일 </label>
+                                <input type="email" class="form-control" name="email" id="email" placeholder="email">
                             </div>
                             <div class="text-center">
-                                <button type="submit" class="btn btn-secondary mt-2"> 로그인 </button>
-                                <a href="{{url_for('register')}}" class="btn btn-secondary mt-2">회원가입</a>
+                                <button type="submit" class="btn btn-secondary mt-2"> 제출 </button>
                             </div>
                         </form>
                     </article>

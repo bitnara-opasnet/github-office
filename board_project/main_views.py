@@ -74,7 +74,7 @@ def main():
 @app.route('/register', methods=["POST", "GET"])
 def register():
     if request.method == 'POST':
-        usertable = User(username=request.form['username'], email=request.form['email'], password=request.form['password']) 
+        usertable = User(username=request.form['username'], email=request.form['email'], phone=request.form["phone"], password=request.form['password']) 
         db.session.add(usertable) 
         db.session.commit() 
         session['username'] = request.form['username']
@@ -116,18 +116,30 @@ def user_detail():
 def user_update(id):
     userid = id
     if request.method == "POST":
+        user_data = User.query.filter_by(id=userid).first()
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
-        user_data = User.query.filter_by(id=userid).first()
+        phone = request.form["phone"]
         user_data.name = name
         user_data.email = email
         user_data.password = password
+        user_data.phone = phone
         db.session.commit()
         return redirect(url_for("user_detail"))
     else:  
         user_data = User.query.filter_by(id=userid).first()
         return render_template("user_update.html", user_data=user_data)
+
+@app.route('/findId', methods=["POST", "GET"])
+def find_id():
+    if request.method == "POST":
+        email = request.form["email"]
+        phone = request.form["phone"]
+        user_data = User.query.filter(User.email == email, User.phone == phone).first()
+        return render_template('finded_id.html', user_data=user_data)
+    else:
+        return render_template('find_id.html')
 
 # 게시판 내용 조회 (Read)
 @app.route('/board')
@@ -305,16 +317,22 @@ def stock2():
     # stock_crawiling()
     keyword=request.args.get('keyword')
     page=request.args.get(get_page_parameter(), type=int, default=1)
-    limit = 5
+    limit = 7
     if keyword:
         search_params = '&' + url_encode({'keyword':keyword}) 
         stocks = Stocks.query.filter(Stocks.name.contains(keyword)).order_by(Stocks.id.asc())
-        stocks = stocks.paginate(page=page, per_page=5)
+        chart = []
+        for i in stocks:
+            chart.append([i.name, int(i.nowVal.replace(',',''))])
+        stocks = stocks.paginate(page=page, per_page=limit)
     else:
         search_params = ''
         stocks = Stocks.query.order_by(Stocks.id.asc())
-        stocks = stocks.paginate(page=page, per_page=5)
-    return render_template("stock_detail.html", stocks=stocks, page=page, limit=limit, keyword=keyword, search_params=search_params)
+        chart = []
+        for i in stocks:
+            chart.append([i.name, int(i.nowVal.replace(',',''))])
+        stocks = stocks.paginate(page=page, per_page=limit)
+    return render_template("stock_detail.html", stocks=stocks, page=page, limit=limit, keyword=keyword, search_params=search_params, chart=chart)
 
 # @app.route('/stock/download')
 # @login_required
@@ -615,3 +633,18 @@ def sysinfodata3():
     # response.content_type = 'application/json'
     # return response
     return jsonify(data)
+
+@app.route('/stocktabledata')
+@login_required
+def stocktable(): 
+    stocks = Stocks.query.order_by(Stocks.id.asc())
+    stocks = pd.read_sql(stocks.statement, stocks.session.bind)
+    stocks = json.loads(stocks.to_json(orient='records'))
+    rst = {'total_rows':80, 'headers':list(stocks[0].keys()), 'rows':stocks}
+    # rst = [80, stocks, list(stocks[0].keys())]
+    return jsonify(rst)
+
+@app.route('/stocktable')
+@login_required
+def stock_table():
+    return render_template("stock_table.html") 

@@ -154,14 +154,19 @@
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script>
+    var chart1 = {{ chart | safe }};
+    var ID = Object.keys(chart1);
+    var count = Object.values(chart1);
+    var getData = function() {
+                    var data = [];
+                    for (var i=0; i<ID.length; i++){
+                        data.push({'name': ID[i], 'y':count[i]});
+                    }
+                    return data;
+    }
+    var data = getData();
+    console.log(data.length);
     function pieChart() {
-        var chart1 = {{chart | safe }};
-            ID = Object.keys(chart1);
-        var colors = Highcharts.getOptions().colors;
-        console.log(ID)
-        Highcharts.setOptions({
-            colors: ['#d470cc', '#3f77cb']
-        });
         // Set up the chart
         var chart = new Highcharts.Chart({
             chart: {
@@ -181,7 +186,7 @@
                 text: '',
             },
             legend: {
-                layout: 'vertical로',//범례 세로 정렬 시 vertical로 지정.(default horizontal)
+                layout: 'vertical',//범례 세로 정렬 시 vertical로 지정.(default horizontal)
                 align: 'right',
                 verticalAlign: 'middle',
                 x: -4,
@@ -209,73 +214,14 @@
                 },
             },
             series: [{
-                name:'ID',
+                // name:'ID',
                 colorByPoint: true,
                 type: 'pie',
                 // innerSize: '50%', //도넛 차트 지정시 내부 구멍 너비를 설정(설정 안하면 기본 파이 차트)
-                data: [
-                    {
-                        name: ID[0],
-                        y: chart1[ID[0]],
-                        color: colors[0],
-                        dataLabels: {
-                            y: -35,
-                            x: 25,
-                            // color: '#d470cc',
-                        }
-                    },
-                    {
-                        name: ID[1],
-                        y: chart1[ID[1]],
-                        color: colors[1],
-                        dataLabels: {
-                            // color: '#3f77cb',
-                        }
-                    },
-                    {
-                        name: ID[2],
-                        y: chart1[ID[2]],
-                        color: colors[2],
-                        dataLabels: {
-                            // color: '#3f77cb',
-                        }
-                    },
-                    {
-                        name: ID[3],
-                        y: chart1[ID[3]],
-                        color: colors[3],
-                        dataLabels: {
-                            // color: '#3f77cb',
-                        }
-                    },
-                    {
-                        name: ID[4],
-                        y: chart1[ID[4]],
-                        color: colors[4],
-                        dataLabels: {
-                            // color: '#3f77cb',
-                        }
-                    },
-                    {
-                        name: ID[5],
-                        y: chart1[ID[5]],
-                        color: colors[5],
-                        dataLabels: {
-                            // color: '#3f77cb',
-                        }
-                    },
-                    {
-                        name: ID[6],
-                        y: chart1[ID[6]],
-                        color: colors[6],
-                        dataLabels: {
-                            // color: '#3f77cb',
-                        }
-                    }
-                ],
+                data: data,
                 dataLabels: {
                     enabled: true,
-                    format: '<span class="d-label">{point.name}</span> : {y}',//label의 포맷을 "데이터 명 : y"로 지정해서 사용.
+                    format: '<span class="d-label">{point.name}</span> : {y}',
                     align: 'center',
                     // 세로 위치 지정
                     // y: -30,

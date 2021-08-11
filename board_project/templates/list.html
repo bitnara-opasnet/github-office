@@ -85,29 +85,32 @@
                     <div class="row">
                         <div class="col-12">
                             <h2 class="mb-3"> 게시판 </h2>
-                            <table class="table table-bordered table-hover table-sm">
-                                <thead class="thead-dark">
+                            <table class="table table-bordered table-hover table-sm tablesort" id="tablesort">
+                                <!-- <thead class="thead-dark"> -->
+                                <thead>
                                     <th class="col-1">순번</th>
                                     <th class="col-3">제목</th>
                                     <th class="col-3">첨부파일</th>
                                     <th class="col-2">이름</th>
                                     <th class="col-3">작성일</th>
                                 </thead>
-                                {% for row in rows.items %}
-                                <tr>
-                                    <td>{{ loop.index + (page - 1) * limit }}</td>
-                                    <td><a href='{{url_for("detail", id=row.id, page=page_url)}}{{search_params}}'>{{
-                                            row.title
-                                            }}</a></td>
-                                    {% if row.image_name %}
-                                    <td>{{row.image_name}}</td>
-                                    {% else %}
-                                    <td></td>
-                                    {% endif %}
-                                    <td>{{ row.name }}</td>
-                                    <td>{{row.create_date.strftime('%Y-%m-%d %H:%M:%S')}}</td>
-                                </tr>
-                                {% endfor %}
+                                <tbody>
+                                    {% for row in rows.items %}
+                                    <tr>
+                                        <td>{{ loop.index + (page - 1) * limit }}</td>
+                                        <td><a href='{{url_for("detail", id=row.id, page=page_url)}}{{search_params}}'>{{
+                                                row.title
+                                                }}</a></td>
+                                        {% if row.image_name %}
+                                        <td>{{row.image_name}}</td>
+                                        {% else %}
+                                        <td></td>
+                                        {% endif %}
+                                        <td>{{ row.name }}</td>
+                                        <td>{{row.create_date.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -192,6 +195,13 @@
             </main>
         </div>
     </div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/static/js/jquery.tablesorter.min.js"></script>
+<script>
+    $(function(){
+        $("#tablesort").tablesorter();
+    })
+</script>
 </body>
 
 </html>

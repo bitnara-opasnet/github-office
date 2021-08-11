@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Tablesorter: required -->
+    <script src="./static/js/jquery.tablesorter.min.js"></script>
+    <script src="./static/js/jquery.tablesorter.widgets.js"></script>
+    <link href="./static/css/theme.blue.css" rel="stylesheet">
+    <!-- Tablesorter: pager widget -->
+    <script src="./static/js/widget-pager.min.js"></script>
+    <link href="./static/css/jquery.tablesorter.pager.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <table class="tablesorter">
+                    <thead>
+                        <tr class="tablesorter-ignoreRow">
+                            <td class="pager" colspan="5">
+                                <img src="./static/image/first.png" class="first" />
+                                <img src="./static/image/prev.png" class="prev" />
+                                <span class="pagedisplay"></span> <!-- this can be any element, including an input -->
+                                <img src="./static/image/next.png" class="next" />
+                                <img src="./static/image/last.png" class="last" />
+                                <select class="pagesize">
+                                    <option value="25">25</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>1</th>
+                            <!-- thead text will be updated from the JSON; make sure the number of columns matches the JSON data -->
+                            <th>2</th>
+                            <th>3</th>
+                            <th>4</th>
+                            <th>5</th>
+                        </tr>
+                    </thead>
+                    <tbody id=rows>
+                        <!-- tbody will be loaded via JSON -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(function () {
+            // $.ajax({
+            //     type: "GET",
+            //     url: '/stocktabledata',
+            //     datatype:"json",
+            // });
+            $("table")
+                .tablesorter({
+                    theme: 'blue',
+                    widthFixed: true,
+                    sortLocaleCompare: true, // needed for accented characters in the data
+                    sortList: [[0, 1]],
+                    widgets: ['zebra', 'filter']
+                })
+                .tablesorterPager({
+                    container: $(".pager"),
+                    ajaxUrl: 'http://192.168.103.252:5000/stocktabledata',
+                    ajaxError: null,
+                    ajaxObject: {
+                        type: 'GET', 
+                        dataType: 'json'
+                    },
+                    ajaxProcessing: function (data, table, xhr) {
+                        if (data && data.hasOwnProperty('rows')) {
+                            var indx, r, row, c, d = data.rows,
+                                // total number of rows (required)
+                                total = data.total_rows,
+                                // array of header names (optional)
+                                headers = data.headers,
+                                // cross-reference to match JSON key within data (no spaces)
+                                headerXref = headers.join(',').replace(/\s+/g, '').split(','),
+                                // all rows: array of arrays; each internal array has the table cell data for that row
+                                rows = [],
+                                // len should match pager set size (c.size)
+                                len = d.length;
+                            // this will depend on how the json is set up - see City0.json
+                            // rows
+                            for (r = 0; r < len; r++) {
+                                row = []; // new row array
+                                // cells
+                                for (c in d[r]) {
+                                    if (typeof (c) === "string") {
+                                        // match the key with the header to get the proper column index
+                                        indx = $.inArray(c, headerXref);
+                                        // add each table cell data to row array
+                                        if (indx >= 0) {
+                                            row[indx] = d[r][c];
+                                        }
+                                    }
+                                }
+                                rows.push(row); // add new row array to rows array
+                            }
+                            // in version 2.10, you can optionally return $(rows) a set of table rows within a jQuery object
+                        return [total, rows, headers];
+                        }
+                    },
+                    // Set this option to false if your table data is preloaded into the table, but you are still using ajax
+                    processAjaxOnInit: true,
+
+                    // output string - default is '{page}/{totalPages}';
+                    // possible variables: {size}, {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
+                    // also {page:input} & {startRow:input} will add a modifiable input in place of the value
+                    output: '{startRow} to {endRow} ({totalRows})',
+
+                    // apply disabled classname (cssDisabled option) to the pager arrows when the rows
+                    // are at either extreme is visible; default is true
+                    updateArrows: true,
+
+                    // starting page of the pager (zero based index)
+                    page: 0,
+
+                    // Number of visible rows - default is 10
+                    size: 25,
+
+                    // Saves the current pager page size and number (requires storage widget)
+                    savePages: true,
+                    // Saves tablesorter paging to custom key if defined.
+                    // Key parameter name used by the $.tablesorter.storage function.
+                    // Useful if you have multiple tables defined
+                    storageKey: 'tablesorter-pager',
+
+                    // Reset pager to this page after filtering; set to desired page number (zero-based index),
+                    // or false to not change page at filter start
+                    pageReset: 0,
+
+                    // if true, the table will remain the same height no matter how many records are displayed.
+                    // The space is made up by an empty table row set to a height to compensate; default is false
+                    fixedHeight: false,
+
+                    // remove rows from the table to speed up the sort of large tables.
+                    // setting this to false, only hides the non-visible rows; needed if you plan to
+                    // add/remove rows with the pager enabled.
+                    removeRows: false,
+
+                    // If true, child rows will be counted towards the pager set size
+                    countChildRows: false,
+
+                    // css class names of pager arrows
+                    cssNext: '.next',  // next page arrow
+                    cssPrev: '.prev',  // previous page arrow
+                    cssFirst: '.first', // go to first page arrow
+                    cssLast: '.last',  // go to last page arrow
+                    cssGoto: '.gotoPage', // page select dropdown - select dropdown that set the "page" option
+
+                    cssPageDisplay: '.pagedisplay', // location of where the "output" is displayed
+                    cssPageSize: '.pagesize', // page size selector - select dropdown that sets the "size" option
+
+                    // class added to arrows when at the extremes; see the "updateArrows" option
+                    // (i.e. prev/first arrows are "disabled" when on the first page)
+                    cssDisabled: 'disabled', // Note there is no period "." in front of this class name
+                    cssErrorRow: 'tablesorter-errorRow' // error information row
+
+                });
+
+        });
+    </script>
+</body>
+
+</html>

@@ -94,6 +94,17 @@
                                     <label for="password"> 비밀번호 </label>
                                     <input type="text" class="form-control" name="password" id="password" , value={{user_data.password}}>
                                 </div>
+                                {% if user_data.phone %}
+                                <div class="from-group">
+                                    <label for="phone"> 전화번호 </label>
+                                    <input type="text" class="form-control" name="phone" id="phone" value={{user_data.phone}}>
+                                </div>
+                                {% else %}
+                                <div class="from-group">
+                                    <label for="phone"> 전화번호 </label>
+                                    <input type="text" class="form-control" name="phone" id="phone">
+                                </div>
+                                {% endif %}
                                 <button type="submit" class="btn btn-secondary btn-sm mt-3">완 료</button>
                                 <button id="go-back" class="btn btn-secondary btn-sm mt-3">뒤로 가기</button>
                             </form>

@@ -21,6 +21,15 @@
     <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js"
         integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c"
         crossorigin="anonymous"></script>
+    <style>
+        th {
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/css/theme.blue.min.css"
+        integrity="sha512-jJ9r3lTLaH5XXa9ZOsCQU8kLvxdAVzyTWO/pnzdZrshJQfnw1oevJFpoyCDr7K1lqt1hUgqoxA5e2PctVtlSTg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
@@ -56,22 +65,22 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/device_list"> 
+                            <a class="nav-link" href="/device_list">
                                 <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url_for('getTopology')}}"> 
+                            <a class="nav-link" href="{{url_for('getTopology')}}">
                                 <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url_for('sysinfo')}}"> 
+                            <a class="nav-link" href="{{url_for('sysinfo')}}">
                                 <i class="fa fa-info" aria-hidden="true"></i> system info
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url_for('live_resource')}}"> 
+                            <a class="nav-link" href="{{url_for('live_resource')}}">
                                 <i class="fas fa-chart-line"></i> system live reourece
                             </a>
                         </li>
@@ -84,22 +93,24 @@
                     <div class="row">
                         <div class="col-12">
                             <h2 class="mb-3">국내증시</h2>
-                            <table class="table table-hover table-sm">
+                            <table class="table table-hover table-sm tablesort" id="tablesort">
                                 <thead>
                                     <tr>
-                                        <th>#</th>
-                                        <th>종목명</th>
-                                        <th>현재가</th>
-                                        <th>등락률</th>
-                                        <th>거래량</th>
+                                        <th class="col-1">#</th>
+                                        <th class="col-3">종목명</th>
+                                        <th class="col-3">현재가</th>
+                                        <th class="col-2">등락률</th>
+                                        <th class="col-3">거래량</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for stock in stocks.items %}
                                     <tr>
                                         <td>{{stock.id}}</td>
-                                        <td><a href='{{url_for("CandleChart", code=stock.Code, page=page)}}{{search_params}}'>{{stock.name}}</a></td>
-                                        <td>{{stock.PrePricenowVal}}</td>
+                                        <td><a
+                                                href='{{url_for("CandleChart", code=stock.Code, page=page)}}{{search_params}}'>{{stock.name}}</a>
+                                        </td>
+                                        <td>{{stock.nowVal}}</td>
                                         <td>{{stock.fluctuation}}</td>
                                         <td>{{stock.volume}}</td>
                                     </tr>
@@ -162,10 +173,131 @@
                 <div>
                     <a href="{{url_for('stockdownloads')}}?keyword={{keyword}}" class="btn btn-success btn-sm">excel</a>
                 </div>
+                <div class="col-10">
+                    <div id="container"></div>
+                </div>
             </main>
-
         </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/accessibility.js"></script>
+    <script>
+        var chart = {{ chart | safe }};
+        var getData = function () {
+            var data = [];
+            for (var i = 0; i < chart.length; i++) {
+                data.push({ 'name': chart[i][0], 'y': chart[i][1] / 1000 });
+            }
+            return data;
+        }
+        var data = getData();
+        data.sort(function (a, b) {
+            return b.y - a.y
+        });
+        // const compare = (key) => (a, b) => {
+        //     return a[key] > a[key] ? 1 : a[key] < b[key] ? -1 : 0;
+        //     };
+        // console.log(data.sort(compare('name')));
+        // console.log(data.sort(compare('y')));
+        function barChart() {
+            var chart = new Highcharts.chart('container', {
+                chart: {
+                    type: 'bar',
+                    marginLeft: 150
+                },
+                title: {
+                    text: '국내 증시 가격'
+                },
+                xAxis: {
+                    type: 'category',
+                    title: {
+                        text: null
+                    },
+                    min: 0,
+                    max: 4,
+                    scrollbar: {
+                        enabled: true
+                    },
+                    tickLength: 0
+                },
+                yAxis: {
+                    min: 10,
+                    max: 1500,
+                    title: {
+                        text: '단위 (천원)',
+                        align: 'high'
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        dataLabels: {
+                            enabled: true
+                        }
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                credits: {
+                    enabled: false
+                },
+                series: [{
+                    name: '가격 (천원)',
+                    data: data
+                }]
+            });
+        }
+        barChart()
+    </script>
+    <!-- <script>
+    $(function() {
+       $('th').each(function (column) {
+          $(this).click(function() {
+                  if($(this).is('.asc')) {
+                      $(this).removeClass('asc');
+                      $(this).addClass('desc');
+                      sortdir=-1;                
+                  } else {
+                     $(this).addClass('asc');
+                     $(this).removeClass('desc'); 
+                     sortdir=1;
+                  }
+                  $(this).siblings().removeClass('asc');
+                  $(this).siblings().removeClass('desc');
+                 var rec = $('table').find('tbody>tr').get();
+                 rec.sort(function (a, b) {
+                      var val1 = $(a).children('td').eq(column).text().toUpperCase();
+                      var val2 = $(b).children('td').eq(column).text().toUpperCase();
+                      return (val1 < val2)?-sortdir:(val1>val2)?sortdir:0;
+                 });
+                 $.each(rec, function(index, row) {
+                      $('tbody').append(row);
+                   });
+             });
+         });
+    });
+</script> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="/static/js/jquery.tablesorter.min.js"></script>
+    <script>
+        $.tablesorter.addParser({
+            id: 'parser',
+            is: function (s) { 
+                return false; //defalt parsing 적용 여부 
+            },
+            format: function (s) { 
+                return s.replace(/[\,\.]/g, '') 
+            }, //정규식을 사용한 마침표, 콤마 제거
+            type: 'numeric'
+        });
+        $(function () {
+            $("#tablesort").tablesorter({
+                theme:'metro-dark'
+                });
+        })
+    </script>
 </body>
 
 </html>
