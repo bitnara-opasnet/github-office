@@ -3,165 +3,203 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <!-- Tablesorter: required -->
-    <script src="./static/js/jquery.tablesorter.min.js"></script>
-    <script src="./static/js/jquery.tablesorter.widgets.js"></script>
-    <link href="./static/css/theme.blue.css" rel="stylesheet">
-    <!-- Tablesorter: pager widget -->
-    <script src="./static/js/widget-pager.min.js"></script>
-    <link href="./static/css/jquery.tablesorter.pager.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js"
+        integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l"
+        crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js"
+        integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c"
+        crossorigin="anonymous"></script>
+
+    <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" type="text/css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.dataTables.min.css" type="text/css"
+        rel="stylesheet">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.print.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.css" />
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.js"></script>
 </head>
 
 <body>
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+        <!-- <img class="navbar-brand col-sm-3 col-md-1" src="{{ url_for('static', filename='/image/signature.png') }}"> -->
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Bitnara's Hompage</a>
+        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
+        <ul class="navbar-nav d-flex flex-row">
+            <li class="nav-item text-nowrap mr-3">
+                <a class="nav-link" href="/user">회원 정보</a>
+            </li>
+            <li class="nav-item text-nowrap mr-2">
+                <a class="nav-link" href="/logout">Sign out</a>
+            </li>
+        </ul>
+    </nav>
+
     <div class="container-fluid">
         <div class="row">
-            <div class="col-12">
-                <table class="tablesorter">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar" style="position:fixed;">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/board">
+                                <!-- <span data-feather="home"></span>
+                                Dashboard <span class="sr-only">(current)</span> -->
+                                <i class="fa fa-list-alt" aria-hidden="true"></i> board
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/stock2">
+                                <i class="fa fa-table" aria-hidden="true"></i> stock
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('stock_table')}}">
+                                <i class="fa fa-table" aria-hidden="true"></i> stock table
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('devicelist')}}">
+                                <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('getTopology')}}">
+                                <i class="fa fa-connectdevelop" aria-hidden="true"></i> Topology
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('sysinfo')}}">
+                                <i class="fa fa-info" aria-hidden="true"></i> system info
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('live_resource')}}">
+                                <i class="fas fa-chart-line"></i> system live reourece
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+                <h2 class="mb-3" id=title></h2>
+                <table class="diaplay dataTable dtr-inline" id="stocktable" width="100%">
                     <thead>
-                        <tr class="tablesorter-ignoreRow">
-                            <td class="pager" colspan="5">
-                                <img src="./static/image/first.png" class="first" />
-                                <img src="./static/image/prev.png" class="prev" />
-                                <span class="pagedisplay"></span> <!-- this can be any element, including an input -->
-                                <img src="./static/image/next.png" class="next" />
-                                <img src="./static/image/last.png" class="last" />
-                                <select class="pagesize">
-                                    <option value="25">25</option>
-                                </select>
-                            </td>
-                        </tr>
                         <tr>
-                            <th>1</th>
-                            <!-- thead text will be updated from the JSON; make sure the number of columns matches the JSON data -->
-                            <th>2</th>
-                            <th>3</th>
-                            <th>4</th>
-                            <th>5</th>
+                            <th>#</th>
+                            <!-- <th>Code</th> -->
+                            <th>종목명</th>
+                            <th>현재가</th>
+                            <th>전일비</th>
+                            <th>등락률</th>
+                            <th>시가총액</th>
+                            <th>상장주식수</th>
+                            <th>액면가</th>
+                            <th>거래량</th>
+                            <!-- <th>PER</th> -->
+                            <!-- <th>ROE</th>
+                            <th>ROF</th> -->
                         </tr>
                     </thead>
-                    <tbody id=rows>
-                        <!-- tbody will be loaded via JSON -->
-                    </tbody>
                 </table>
-            </div>
+                <div id='row_index'></div>
+            </main>
         </div>
     </div>
     <script>
+        function getCurrentDate() {
+            var date = new Date();
+            var year = date.getFullYear().toString();
+            var month = date.getMonth() + 1;
+            month = month < 10 ? '0' + month.toString() : month.toString();
+            var day = date.getDate();
+            day = day < 10 ? '0' + day.toString() : day.toString();
+            return year + month + day;
+        }
+        // console.log(getCurrentDate());
+        var now = getCurrentDate()
+        document.getElementById('title').innerHTML = '국내증시_' + now
+
         $(function () {
-            // $.ajax({
-            //     type: "GET",
-            //     url: '/stocktabledata',
-            //     datatype:"json",
-            // });
-            $("table")
-                .tablesorter({
-                    theme: 'blue',
-                    widthFixed: true,
-                    sortLocaleCompare: true, // needed for accented characters in the data
-                    sortList: [[0, 1]],
-                    widgets: ['zebra', 'filter']
-                })
-                .tablesorterPager({
-                    container: $(".pager"),
-                    ajaxUrl: 'http://192.168.103.252:5000/stocktabledata',
-                    ajaxError: null,
-                    ajaxObject: {
-                        type: 'GET', 
-                        dataType: 'json'
-                    },
-                    ajaxProcessing: function (data, table, xhr) {
-                        if (data && data.hasOwnProperty('rows')) {
-                            var indx, r, row, c, d = data.rows,
-                                // total number of rows (required)
-                                total = data.total_rows,
-                                // array of header names (optional)
-                                headers = data.headers,
-                                // cross-reference to match JSON key within data (no spaces)
-                                headerXref = headers.join(',').replace(/\s+/g, '').split(','),
-                                // all rows: array of arrays; each internal array has the table cell data for that row
-                                rows = [],
-                                // len should match pager set size (c.size)
-                                len = d.length;
-                            // this will depend on how the json is set up - see City0.json
-                            // rows
-                            for (r = 0; r < len; r++) {
-                                row = []; // new row array
-                                // cells
-                                for (c in d[r]) {
-                                    if (typeof (c) === "string") {
-                                        // match the key with the header to get the proper column index
-                                        indx = $.inArray(c, headerXref);
-                                        // add each table cell data to row array
-                                        if (indx >= 0) {
-                                            row[indx] = d[r][c];
-                                        }
-                                    }
-                                }
-                                rows.push(row); // add new row array to rows array
+            var table = $("#stocktable").DataTable({
+                "pageLength": 10,
+                responsive: true,
+                ajax: {
+                    url: "/stocktabledata",
+                    type: "GET",
+                },
+                rowId: 'staffId',
+                columns: [
+                    { data: "id" },
+                    // { data: "Code" },
+                    {
+                        data: "name",
+                        "render": function (data, type, row, meta) {
+                            if (type === 'display') {
+                                data = '<a href="/stock2/chart?code=' + row.Code + '&name='+ row.name +'">' + row.name + '</a>';
                             }
-                            // in version 2.10, you can optionally return $(rows) a set of table rows within a jQuery object
-                        return [total, rows, headers];
+                            return data;
                         }
                     },
-                    // Set this option to false if your table data is preloaded into the table, but you are still using ajax
-                    processAjaxOnInit: true,
-
-                    // output string - default is '{page}/{totalPages}';
-                    // possible variables: {size}, {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
-                    // also {page:input} & {startRow:input} will add a modifiable input in place of the value
-                    output: '{startRow} to {endRow} ({totalRows})',
-
-                    // apply disabled classname (cssDisabled option) to the pager arrows when the rows
-                    // are at either extreme is visible; default is true
-                    updateArrows: true,
-
-                    // starting page of the pager (zero based index)
-                    page: 0,
-
-                    // Number of visible rows - default is 10
-                    size: 25,
-
-                    // Saves the current pager page size and number (requires storage widget)
-                    savePages: true,
-                    // Saves tablesorter paging to custom key if defined.
-                    // Key parameter name used by the $.tablesorter.storage function.
-                    // Useful if you have multiple tables defined
-                    storageKey: 'tablesorter-pager',
-
-                    // Reset pager to this page after filtering; set to desired page number (zero-based index),
-                    // or false to not change page at filter start
-                    pageReset: 0,
-
-                    // if true, the table will remain the same height no matter how many records are displayed.
-                    // The space is made up by an empty table row set to a height to compensate; default is false
-                    fixedHeight: false,
-
-                    // remove rows from the table to speed up the sort of large tables.
-                    // setting this to false, only hides the non-visible rows; needed if you plan to
-                    // add/remove rows with the pager enabled.
-                    removeRows: false,
-
-                    // If true, child rows will be counted towards the pager set size
-                    countChildRows: false,
-
-                    // css class names of pager arrows
-                    cssNext: '.next',  // next page arrow
-                    cssPrev: '.prev',  // previous page arrow
-                    cssFirst: '.first', // go to first page arrow
-                    cssLast: '.last',  // go to last page arrow
-                    cssGoto: '.gotoPage', // page select dropdown - select dropdown that set the "page" option
-
-                    cssPageDisplay: '.pagedisplay', // location of where the "output" is displayed
-                    cssPageSize: '.pagesize', // page size selector - select dropdown that sets the "size" option
-
-                    // class added to arrows when at the extremes; see the "updateArrows" option
-                    // (i.e. prev/first arrows are "disabled" when on the first page)
-                    cssDisabled: 'disabled', // Note there is no period "." in front of this class name
-                    cssErrorRow: 'tablesorter-errorRow' // error information row
-
+                    { data: "nowVal" },
+                    { data: "PrePricenowVal" },
+                    { data: "fluctuation" },
+                    { data: "totalVal" },
+                    { data: "stockListNum" },
+                    { data: "faceVal" },
+                    { data: "volume" }
+                    // { data: "PER" },
+                    // { data: "ROE" },
+                    // { data: "ROF" },
+                ],
+                dom: 'Bfrtip',
+                bom: true,
+                buttons: [
+                    {
+                        extend: 'excel',
+                        text: 'excel',
+                        filename: 'stock_list_' + now,
+                        title: 'stock list_' + now
+                    },
+                    {
+                        extend: 'copy',
+                        text: 'copy',
+                        title: 'stock list_' + now
+                    },
+                    {
+                        extend: 'print',
+                        text: 'print',
+                        title: 'stock list_' + now
+                    },
+                ]
+            });
+            $('#stocktable tbody').on('click', 'tr', function () {
+                // var row_index = table.row(this).index();
+                // console.log(row_index);
+                location.herf = ''
+            });
+            table.on('order.dt search.dt', function () {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = i + 1;
                 });
-
+            }).draw();
         });
     </script>
 </body>

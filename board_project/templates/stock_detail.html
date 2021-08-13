@@ -65,6 +65,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('stock_table')}}">
+                                <i class="fa fa-table" aria-hidden="true"></i> stock table
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="/device_list">
                                 <i class="fa fa-laptop" aria-hidden="true"></i> Devicelist
                             </a>
@@ -108,7 +113,7 @@
                                     <tr>
                                         <td>{{stock.id}}</td>
                                         <td><a
-                                                href='{{url_for("CandleChart", code=stock.Code, page=page)}}{{search_params}}'>{{stock.name}}</a>
+                                                href='{{url_for("CandleChart", code=stock.Code, page=page, name = stock.name)}}{{search_params}}'>{{stock.name}}</a>
                                         </td>
                                         <td>{{stock.nowVal}}</td>
                                         <td>{{stock.fluctuation}}</td>

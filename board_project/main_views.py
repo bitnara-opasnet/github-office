@@ -377,6 +377,7 @@ def CandleChart():
     search_params = '&' + url_encode({'keyword':keyword}) 
     page=request.args.get('page')
     code=request.args.get('code')
+    name=request.args.get('name')
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
     url = 'https://finance.naver.com/item/sise_day.nhn?code={}&page=1'.format(code)
     r = requests.get(url, headers={"user-agent": user_agent})
@@ -389,8 +390,8 @@ def CandleChart():
     for i in range(len(table)):
         stock_list.append(list(table.iloc[i]))
     
-    stocks = Stocks.query.filter(Stocks.Code.contains(code)).order_by(Stocks.id.asc())
-    return render_template("detail_chart.html", chartData = stock_list, code=code, stocks=stocks, page=page, search_params=search_params)
+    # stocks = Stocks.query.filter(Stocks.Code.contains(code)).order_by(Stocks.id.asc())
+    return render_template("detail_chart.html", chartData = stock_list, code=code, name=name, page=page, search_params=search_params)
 
 @app.route("/stock2/chart/download")
 @login_required
@@ -615,8 +616,8 @@ def sysinfodata2():
     cpu = psutil.cpu_times_percent()
     idle = cpu.idle
     net = psutil.net_io_counters()
-    sent = [time() * 1000, round(net.bytes_sent/1024, 2)]
-    recv = [time() * 1000, round(net.bytes_recv/1024, 2)]
+    sent = [time() * 1000, round(net.bytes_sent/1024**2, 2)]
+    recv = [time() * 1000, round(net.bytes_recv/1024**2, 2)]
     data = {'sent':sent, 'recv':recv}
     # response = make_response(json.dumps(data))
     # response.content_type = 'application/json'
@@ -640,7 +641,7 @@ def stocktable():
     stocks = Stocks.query.order_by(Stocks.id.asc())
     stocks = pd.read_sql(stocks.statement, stocks.session.bind)
     stocks = json.loads(stocks.to_json(orient='records'))
-    rst = {'total_rows':80, 'headers':list(stocks[0].keys()), 'rows':stocks}
+    rst = {'data':stocks}
     # rst = [80, stocks, list(stocks[0].keys())]
     return jsonify(rst)
 

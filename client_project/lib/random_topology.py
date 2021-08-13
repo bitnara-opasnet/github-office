@@ -83,7 +83,7 @@ def increase_num(num):
         n+=1        
         yield n
 
-def random_node_create(node_data, group_name, cidr, node_num, num): 
+def random_node_create(node_data, group_name, cidr, node_num, num, client_num): 
     final_nodes = []
     last_ip = get_last_ip(node_data, group_name)
     node_n = increase_num(node_num)
@@ -102,7 +102,8 @@ def random_node_create(node_data, group_name, cidr, node_num, num):
     for i in range(num):
         ori_node_one.update({'ip':random_node[i][0], 
                              'id':random_node[i][2],
-                             'label':random_node[i][3]})
+                             'label':random_node[i][3],
+                             'clientcount': client_num})
         ori_node_one.get('additionalInfo').update({'macAddress':random_node[i][1]})
         random_dic1 = dict(ori_node_one.items())
         random_dic2 = {'additionalInfo' : dict(ori_node_one['additionalInfo'])}
@@ -380,32 +381,40 @@ def get_ap_link(new_node_data, link_list):
         new_links.append(random_dic1) 
     return new_links
 
-def get_random_topology3(params, ap_num, rechable, unrechable_num=0):
+def get_random_topology3(params, ap_num, edge_num, rechable, unrechable_num=0):
+    client_count = 2
     is_token = get_auth_token()['Token']
     json_data = get_api_data(is_token, 'https://100.64.0.101/dna/intent/api/v1/topology/physical-topology')
     topology_data = json_data['response']
     for i in topology_data['nodes']:
         get_hostname(i)
         i['reachabilityStatus'] = 'reachable'
+        i['clientcount'] = None
+
+    for i in topology_data['links']:
+        i['portbpsdata'] = {}
 
     ori_node = topology_data['nodes']
     final_nodes = topology_data['nodes'][:]
     final_links = topology_data['links'][:]
-    AP_node = random_node_create(ori_node, 'AP', '/24', 9509, ap_num)
+    AP_node = random_node_create(ori_node, 'AP', '/24', 9509, ap_num, client_count)
     for i in AP_node:
         final_nodes.append(i)
-
-    # Edge_node = []
-    # for i in ori_node:
-    #     if i.get('group_name') == 'Edge':
-    #         Edge_node.append(i)
     
-    # Edge_node = random_node_create(ori_node, 'Edge', '/24', 1000, 15)
-    # Edge_links = edge_link_create(Edge_node, final_links, 15, 10)
-    # for i in Edge_links:
-    #     final_links.append(i)
-    # for i in Edge_node:
-    #     final_nodes.append(i)
+    if edge_num >=1 :
+        Edge_node = []
+        for i in ori_node:
+            if i.get('group_name') == 'Edge':
+                Edge_node.append(i)
+        
+        Edge_node = random_node_create(ori_node, 'Edge', '/24', 1000, edge_num, client_count)
+        Edge_links = edge_link_create(Edge_node, final_links, edge_num, 1)
+        for i in Edge_links:
+            final_links.append(i)
+        for i in Edge_node:
+            final_nodes.append(i)
+        else:
+            pass
 
     ap_node_list = new_node_list(ori_node, final_nodes)
     new_links = get_ap_link(ap_node_list, final_links)

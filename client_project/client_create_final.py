@@ -50,11 +50,12 @@ def networkdevice():
 
 @app.route('/dna/intent/api/v1/topology/physical-topology')
 def getTopology():
-    # final_dict = dna_topology_data(num) 
-    num = random.randint(1,2)
+    # final_dict = dna_topology_data(15) 
+    # num = random.randint(1,2)
+    num = 1
     # final_dict = get_random_topology(num)
     # final_dict = get_random_topology1(num)
-    final_dict = get_random_topology3(1, ap_num=1, rechable='Y', unrechable_num=0)
+    final_dict = get_random_topology3(num, ap_num=2, edge_num=0, rechable='Y', unrechable_num=1)
     # final_dict = get_random_topology4()
     print(len(final_dict['response'].get('nodes')))
     print(len(final_dict['response'].get('links')))

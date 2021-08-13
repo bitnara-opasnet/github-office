@@ -26,7 +26,7 @@ function requestData() {
     });
 }
 
-$( function () {
+$(function () {
     chart = new Highcharts.Chart({
         chart: {
             renderTo: 'container',
@@ -47,10 +47,28 @@ $( function () {
             minPadding: 0.2,
             maxPadding: 0.2,
             title: {
-                text: 'Kbps',
+                text: 'Mbps',
                 margin: 80
             }
+        },
+        tooltip: {
+            headerFormat: '<b>{series.name}</b><br/>',
+            pointFormat: '{point.y}Mbps'
         },
         series: series
     });
 });
+
+// $('#button').click(function () {
+//     var max = chart.yAxis[0].max;
+//     var min = chart.yAxis[0].min;
+//     max += 10;
+//     chart.yAxis[0].setExtremes(min, max);
+// });
+
+// $('#button1').click(function () {
+//     var max = chart.yAxis[0].max;
+//     var min = chart.yAxis[0].min;
+//     min -= 10;
+//     chart.yAxis[0].setExtremes(min, max);
+// });
