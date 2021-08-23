@@ -63,9 +63,11 @@
                     <h3 class="card-header">physical topology</h3>
                     <article class="card-body">
                         <div>
-                            <a href="{{url_for('sentTopology')}}" class="btn btn-success btn-sm" id="sendTopology"> 전송 </a>
+                            <!-- <a href="{{url_for('sentTopology')}}" class="btn btn-success btn-sm" id="sendTopology"> 전송 </a> -->
+                            <input type="button" value = "전 송" onclick="sendTopology()">
                             <a href="#" class="btn btn-success btn-sm" id='show_content'> topology content </a>
                             <div id='content' style="display: none;">{{final_dict}}</div>
+                            <div id='sentTopology'></div>
                         </div>
                     </article>
                 </div>
@@ -78,21 +80,28 @@
                 $("#content").toggle();
             });
         });
-
-        var data = {{ final_dict | safe}};
-        // var rst = data['response']
-        // console.log(rst)
-        $(function (){
-            $("sendTopology").click(function(){
-                $.ajax({
-                    type: "POST",
-                    url: "{{url_for('sentTopology')}}",
-                    data: data,
-                    dataType: "json",
-                    success: 
-                });
+        
+        function sendTopology(){
+            var data = {{ form_data | safe}};
+            var data = { 'data': data };
+            // console.log(data)
+            $.ajax({
+                type: "POST",
+                url: "{{url_for('sentTopology')}}",
+                data: JSON.stringify(data),
+                dataType: "JSON",
+                contentType: "application/json",
+                success: function(result){
+                    var rst = JSON.stringify(result);
+                    // alert('Send Successful');
+                    alert(rst);
+                    // $('#sentTopology').html(rst)
+                },
+                error: function(){
+                    console.log("error");
+                }
             });
-        });
+        };
     </script>
 </body>
 

@@ -74,16 +74,22 @@ def getTopology():
     print(len(final_dict['response'].get('links')))
     return jsonify(final_dict)
 
-@app.route('/dna/intent/api/v1/topology')
+@app.route('/dna/intent/api/v1/topology', methods=["GET","POST"])
 def sentTopology():
-    form_params = 'a'
+    form = TopologyForm()
+    if form.validate_on_submit():
+        Params = form.Params.data
+    # data = request.get_json()
+    # data = data.get('data')
+    # # print(data)
+    # params = data.get('params')
     # if params == 'N' :
     #     final_dict = get_random_topology3('N', ap_num=0, edge_num=0, client_count=0, rechable='Y', unrechable_num=0)
     # else: 
-    #     final_dict = get_random_topology3('Y', ap_num=params_dict['ap_num'], edge_num=params_dict['edge_num'], client_count=params_dict['client_count'], rechable=params_dict['rechable'], unrechable_num=params_dict['unrechable_num'])
+    #     final_dict = get_random_topology3('Y', ap_num=data.get('ap_num'), edge_num=data.get('edge_num'), client_count=data.get('client_count'), rechable=data.get('rechable'), unrechable_num=data.get('unrechable_num'))
     # print(len(final_dict['response'].get('nodes')))
     # print(len(final_dict['response'].get('links')))
-    return jsonify(form_params)
+    return jsonify(Params)
 
  
 @app.route('/', methods=["GET", "POST"])
@@ -96,6 +102,7 @@ def physical_topology():
         client_count = form.ClientCount.data
         rechable = form.rechable.data
         unrechable_num = form.UnrechableNum.data
+        form_data = {'params':params, 'ap_num':ap_num, 'edge_num':edge_num, 'client_count':client_count, 'rechable':rechable, 'unrechable_num':unrechable_num}
         if params == 'N' :
             final_dict = get_random_topology3('N', ap_num=0, edge_num=0, client_count=0, rechable='Y', unrechable_num=0)
         else: 
@@ -104,7 +111,7 @@ def physical_topology():
         print(len(final_dict['response'].get('links')))
         final_dict = json.dumps(final_dict, indent=4)
         # return jsonify(final_dict)
-        return render_template('physical-topology-sent.html', form=form, final_dict=final_dict, ap_num=ap_num)
+        return render_template('physical-topology-sent.html', form=form, final_dict=final_dict, form_data=form_data)
     return render_template('physical-topology.html', form=form)
 
  
