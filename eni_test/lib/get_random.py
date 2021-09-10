@@ -22,16 +22,20 @@ class GetRandomClient(object):
             res += random.choice(str_pool)
         result = mac_sample[:8] +':'+ res[:2] +':'+ res[2:4] +':'+ res[4:]
         return result
-        
-    def increase_num(self, num):
+
+    # https://wiki.python.org/moin/Generators
+    def increase_num(self, num): 
         n=num
         while True:
             n+=1        
             yield n
 
     def random_data_create(self, ip, num, cidr, data, params): 
+        # 생성할 client 개수 만큼 ip 생성
         ip_list = self.get_hostip_list(ip, cidr, num)
         n = self.increase_num(0)
+
+        # wireless / wired 나눠서 생성
         random_data = []
         for i in ip_list:
             random_mac = self.get_mac_addr()
@@ -45,15 +49,18 @@ class GetRandomClient(object):
                     random_data.append([i, random_mac,'wireless_user_'+ str(next(n))])
                 else:
                     random_data.append([i, random_mac,'wired_user_'+ str(next(n))])
-        for i in data:              
+
+        # active list 중 ip가 같은 data 샘플로 추출
+        for i in data:   # data =  active_data.get('activeList').get('activeSession')          
             if i.get('framed_ip_address') == ip:
                 sample_data_one = i.copy()
+
         final_data = []
         for i in range(num):
             sample_data_one.update({'framed_ip_address':random_data[i][0], 'calling_station_id':random_data[i][1], 'user_name':random_data[i][2]})
             random_dic1 = dict(sample_data_one.items())
             final_data.append(random_dic1)
-        return(final_data)
+        return (final_data)
 
     def device_devision(self, data, famliy_name, role_name):
         result_list = []

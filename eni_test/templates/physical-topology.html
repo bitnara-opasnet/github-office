@@ -57,7 +57,12 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link" href="{{url_for('physical_topology')}}">
-                                <i class="fab fa-connectdevelop"></i> physical topology
+                                <i class="fab fa-connectdevelop"></i> create physical topology
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{url_for('createActiveList')}}">
+                                <i class="fab fa-connectdevelop"></i> create Active List
                             </a>
                         </li>
                     </ul>
@@ -66,7 +71,7 @@
 
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
                 <div class="card">
-                    <h3 class="card-header">physical topology</h3>
+                    <h3 class="card-header">create physical topology</h3>
                     <article class="card-body">
                         <form method="POST" enctype="multipart/form-data" action="" id="topologyform">
                             <div class="form-group row">

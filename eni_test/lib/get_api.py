@@ -32,7 +32,6 @@ class getApi(object):
         response = requests.get(url, headers=headers, verify=False)
         return response.json()
 
-
     def get_xml_data(self, uri_addr):
         url = uri_addr
         id = self.id
