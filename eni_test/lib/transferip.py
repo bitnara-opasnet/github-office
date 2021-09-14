@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
 import argparse
@@ -14,15 +13,18 @@ def cidrtonetmask2(bit):
     net4 = ipaddress.ip_network('0.0.0.0/'+str(bit)).netmask
     return str(net4)
 
-
 def transferip():
     parser = argparse.ArgumentParser()
-    parser.add_argument('netmask', metavar='netmask', type=str, help='netmask')
-    parser.add_argument('cidr', metavar='cidr', type=str, help='cidr')
+    parser.add_argument('--netmask', metavar='netmask', type=str, help='netmask')
+    parser.add_argument('--cidr', metavar='cidr', type=str, help='cidr')
     args = parser.parse_args()
-    netmask = args.netmask
-    cidr = args.cidr
-    return(netmask, cidr)
+    if args.netmask:
+        netmask = args.netmask
+        rst = netmasktocidr(netmask)
+    else:
+        cidr = args.cidr
+        rst = cidrtonetmask2(cidr)
+    print(rst)
 
 if __name__ == '__main__':
     transferip()
