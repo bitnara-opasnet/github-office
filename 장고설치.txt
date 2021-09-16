@@ -1,0 +1,28 @@
+* 프로젝트 생성
+django-admin startproject config .
+django-admin startproject [ ] 
+
+* 실행
+python manage.py runserver 8080
+python manage.py runserver 0:8000
+
+vi settings.py
+
+import os
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'board',
+        'USER': 'postgres',
+        'PASSWORD': 'qkrwjdtn07!',
+        'HOST': 'localhost',
+        'PORT': '5432'
+     }
+}
+ALLOWD_HOSTS = ['*']
+TEMPLATES -> DIRS: [os.path.join(BASE_DIR, 'templates')]
+
+
+./manage.py migrate
+./manage.py createsuperuser
+./manage.py startapp bbs
