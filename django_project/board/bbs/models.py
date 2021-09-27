@@ -1,12 +1,12 @@
 from django.db import models
+import datetime
 
 # Create your models here.
-class Question(models.Model):
-    question_text = models.CharField(max_length=200)
-    pub_date = models.DateTimeField('date published')
+class Post(models.Model):
+    name = models.CharField(max_length=50)
+    title = models.TextField()
+    contents = models.TextField()
+    create_date = models.DateTimeField(default=datetime.datetime.now())
 
-
-class Choice(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    choice_text = models.CharField(max_length=200)
-    votes = models.IntegerField(default=0)
+    def __str__(self):
+        return self.title

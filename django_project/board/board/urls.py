@@ -19,5 +19,5 @@ from django.urls.conf import include
 
 urlpatterns = [
     path('admin/', admin.site.urls), 
-    path('bbs/', include('bbs.urls')), # 다른 url 패턴을 포함할 때 사용
+    path('', include('bbs.urls')), # 다른 url 패턴을 포함할 때 사용
 ]
