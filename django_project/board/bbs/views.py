@@ -22,19 +22,19 @@ class IndexView(ListView):
     context_object_name = 'postlist'   
     template_name='list.html'  
 
-def detail(request, pk): # 게시글(Post) 중 pk(primary_key)를 이용해 하나의 게시글(post)를 검색
-    try:
-        post = Post.objects.get(pk=pk)
-        post.create_date = post.create_date.astimezone(timezone('Asia/Seoul'))
-        print(post.create_date)
-    except Post.DoesNotExist:
-        raise Http404("Does not exist!")
-    return render(request, 'detail.html', {'post': post})
+# def detail(request, pk): # 게시글(Post) 중 pk(primary_key)를 이용해 하나의 게시글(post)를 검색
+#     try:
+#         post = Post.objects.get(pk=pk)
+#         post.create_date = post.create_date.astimezone(timezone('Asia/Seoul'))
+#         print(post.create_date)
+#     except Post.DoesNotExist:
+#         raise Http404("Does not exist!")
+#     return render(request, 'detail.html', {'post': post})
 
-# class DetailView(DetailView):
-#     model = Post
-#     context_object_name = 'post'  
-#     template_name='detail.html'  
+class DetailView(DetailView):
+    model = Post
+    context_object_name = 'post'  
+    template_name='detail.html'  
 
 # Create
 def input(request):
@@ -55,9 +55,9 @@ def delete(request, pk):
     post.delete()
     return redirect('/list')
 
-class DeleteView(DeleteView) :
-    model = Post
-    # template_name ='delete.html'
+# class DeleteView(DeleteView) :
+#     model = Post
+#     template_name ='delete.html'
 
 #Update
 # def modify(request, pk):
