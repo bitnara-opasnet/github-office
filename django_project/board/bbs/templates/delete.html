@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+    <div class="card">
+        <h3 class="card-header">게시글 삭제</h3>
+        <article class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ post.title }}를 삭제하시겠습니까? 
+                </div>
+                <input type="submit" class="btn btn-secondary btn-sm" value="삭 제">
+            </form>
+        </article>
+    </div>
+</main>
+{% endblock %}
