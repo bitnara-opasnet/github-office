@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <h4>Flow Search</h4>
+    <div class="row">
+        <div class="col">
+            <div class="card shadow mb-4"> 
+                <!-- <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Host Group List</h6>
+                </div> -->
+                <div class="card-body">
+                    <form action="" method="POST">{% csrf_token %}
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label>time range</label>
+                                <select class="custom-select my-1 mr-sm-2" name="time">
+                                    <option value="5">지난 5분</option>
+                                    <option value="10">지난 10분</option>
+                                    <option value="custom">맞춤 설정</option>
+                                </select>
+                                <!-- <input id="datetimes" type="text" name="datetimes" value="{{date}}" class="form-control form-control-md"/> -->
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Record Limit</label>
+                                <select class="custom-select my-1 mr-sm-2" name="record">
+                                    <option value="50">50</option>
+                                    <option value="500">500</option>
+                                    <option value="1000">1000</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label>Source IP</label>
+                                <input type="text" class="form-control" id="sourceip" name="sourceip" placeholder="192.168.10.10 또는 !192.168.10.10" value="{{ip}}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Source Port/Protocol</label>
+                                <input type="text" class="form-control" id="sourceport" name="sourceport" placeholder="80/tcp 또는 !80/tcp" value="">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label>Destination IP</label>
+                                <input type="text" class="form-control" id="destinationip" name="destinationip" placeholder="192.168.10.10 또는 !192.168.10.10" value="">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Destination Port/Protocol</label>
+                                <input type="text" class="form-control" id="destinationport" name="destinationport" placeholder="80/tcp 또는 !80/tcp" value="">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <input type="submit" class="btn btn-primary btn-sm" value="검색">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

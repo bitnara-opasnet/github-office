@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h4><a href="{% url 'hostgroup_list' %}">{{hostgroup_detail.parentDisplay.name}}</a> > <a href="{% url 'hostgroup_detail' id=hostgroup_detail.id %}">{{hostgroup_detail.name}}</a></h4>
+    </div>
+    <div class="card-deck">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">호스트 그룹 정보</h6>
+            </div>
+            <div class="card-body">
+                <p>호스트 그룹: {{hostgroup_detail.name}}</p>
+                <p>정책: {{hostgroup_detail.location}}</p>
+                {% for i in hostgroup_detail.ranges %}
+                <p>ranges: {{i}}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">트래픽 사용량 상위(top 10) 어플리케이션 (last 12 hours)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="myPieChart3"></canvas>
+            </div>
+        </div>
+        {% if host_list|length != 0 %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Host Group List</h6>
+            </div>
+            <div class="card-body d-sm-flex flex-wrap">
+                {% for host in host_list %}
+                <ul class="list-group list-group-horizontal-sm">
+                    {% if host.children|length == 0 %}
+                    <li class="list-group-item list-group-item-action list-group-item-light" style="margin-left: 20px; margin-bottom: 20px; width: 150px;">
+                        <a href="{% url 'hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item list-group-item-action list-group-item-light" style="margin-left: 20px; margin-bottom: 20px; width: 150px;">
+                        <a href="{% url 'hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                        <span class="badge badge-primary badge-pill">{{host.children|length}}</span>
+                    </li>
+                    {% endif %}
+                </ul>        
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">총 트래픽 (last 7 days)</h6>
+        </div>
+        <div class="card-body">
+            <canvas id="myAreaChart"></canvas>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Host List (last 5 min)</h6>
+        </div>
+        <div class="card-body">
+            <div class="row ml-2 mb-2">
+                <h4 id="HostlistLength"></h4>
+            </div>
+            <div class="row ml-1">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="dataTable3" width="100%">
+                        <thead>
+                            <tr>
+                                <th class="col-1">#</th>
+                                <th class="col-2">host ip</th>
+                                <th class="col-4">Last access time</th>
+                                <th class="col-2">flow count</th>
+                                <th class="col-3">user name (ISE 연동)</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wrap-loading display-none">
+        <img src="{% static 'image/loading.gif' %}" alt="loading" />
+    </div> 
+    
+</div>
+
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+<script src="{% static 'js/palette.js' %}"></script>
+
+<script>
+    function searchParam(key) {
+        return new URLSearchParams(location.search).get(key);
+    };
+    console.log(searchParam('hostgroup'));
+    if (searchParam('hostgroup') == 0){
+            var select_url = "{% url 'hostgroup_detail_data' id=hostgroup_detail.id hostgroup=0 %}"
+        } else {
+            var select_url = "{% url 'hostgroup_detail_data' id=hostgroup_detail.id hostgroup=1 %}"
+        }
+    console.log(select_url)
+
+    var seq = palette('rainbow', 10).map(function(hex) {
+                        return '#' + hex;
+                })
+    // console.log(seq)
+
+    $.ajax({
+        url: select_url,
+        method: "GET",
+        dataType: "json",
+        beforeSend:function(){
+            $('.wrap-loading').removeClass('display-none');
+        },
+        complete:function(){
+            $('.wrap-loading').addClass('display-none');
+        }
+     })
+    .done(function(data) {
+        trafficApplicationtop10(data.applications_traffic);
+        TotaltrafficByte(data.total_traffic);
+        HostListTable(data.host_list)
+    })
+    .fail(function() {
+        alert( "error" );
+    });
+
+    function trafficApplicationtop10 (chartdata) {
+        var AppName = [];
+        var trafficByte = [];
+        var applications_traffic = chartdata;
+        chartdata.forEach(function(d, i) {
+            // console.log(d, i);
+            AppName.push(d.id);
+            trafficByte.push(d.total);
+            }
+        );
+
+        var ctx = document.getElementById("myPieChart3");
+        var myPieChart3 = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: AppName,
+            datasets: [{
+              data: trafficByte,
+              backgroundColor: seq,
+              hoverBorderColor: "rgba(234, 236, 244, 1)",
+              hoverOffset: 4,
+              borderWidth: 0
+            }],
+          },
+          options: {
+            maintainAspectRatio: false,
+            tooltips: {
+              backgroundColor: "rgb(255,255,255)",
+              bodyFontColor: "#858796",
+              borderColor: '#dddfeb',
+              xPadding: 15,
+              yPadding: 15,
+              displayColors: false,
+              caretPadding: 10,
+            },
+            legend: {
+              position: 'right'
+            },
+            cutoutPercentage: 0,
+          },
+        });
+    }
+    function TotaltrafficByte (chartdata) {
+        var TrafficLabels = [];
+        var TotaltrafficByte = [];
+        var applications_traffic = chartdata;
+        chartdata.forEach(function(d, i) {
+            // console.log(d, i);
+            TrafficLabels.push(d.timestamp);
+            TotaltrafficByte.push(d.total);
+            }
+        );
+        // console.log(TrafficLabels);
+        // console.log(TotaltrafficByte);
+
+        var ctx = document.getElementById("myAreaChart");
+        var myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: TrafficLabels,
+            datasets: [{
+            label: "traffic(Byte)",
+            lineTension: 0.3,
+            backgroundColor: "rgba(78, 115, 223, 0.05)",
+            borderColor: "rgba(78, 115, 223, 1)",
+            data: TotaltrafficByte,
+            pointStyle: 'line'
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+            },
+            scales: {
+            xAxes: [{
+                // type: 'time',
+                time: {
+                    unit: 'date',
+                },
+                gridLines: {
+                display: false,
+                // drawBorder: false
+                },
+                ticks: {
+                    maxTicksLimit: 7,
+                    fontSize : 10,
+                    callback: function(value, index){
+                        console.log(typeof value);
+                            return value;
+                        }
+                }
+            }],
+            yAxes: [{
+                ticks: {
+                    maxTicksLimit: 5,
+                    padding: 10,
+                    callback: function(value, index){
+                            if(value.toString().length >= 10) return (value/1024**3).toFixed(2) + "GB";
+                            else return (value/1024**2).toFixed(2) + "MB";
+                        }
+                },
+                gridLines: {
+                color: "rgb(234, 236, 244)",
+                zeroLineColor: "rgb(234, 236, 244)",
+                // drawBorder: false,
+                borderDash: [2],
+                zeroLineBorderDash: [2]
+                }
+            }],
+            },
+            legend: {
+            display: false
+            },
+            tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            caretPadding: 10,
+            }
+        }
+        });
+    }
+    function HostListTable(chartdata){ 
+        var GroupID = {{hostgroup_detail.id}};
+        var table = $('#dataTable3').DataTable({
+            "responsive": true, 
+            "order": [[ 3, "desc" ]],
+            "data": chartdata,
+            "columns": [
+                { data: null },
+                {
+                    data: "ip",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="' + GroupID + '/hostdetail/' + row.ip + '">' + row.ip + '</a>';
+                        }
+                        return data;
+                    }
+                },
+                { data: "first_time" },
+                { data: "count" },
+            ],
+            "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+            }],
+        });
+        table.on('order.dt search.dt', function () {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+        // console.log(table.rows().count());
+        document.getElementById('HostlistLength').innerHTML = 'The number of active host list :' + table.rows().count()
+    };
+</script>
+{% endblock %}

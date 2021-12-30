@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %} 
+<div class="container-fluid">
+    <div class="card">
+        <h3 class="card-header">My Page</h3>
+        <article class="card-body">
+            <div class="row">
+                <div class="col-2">
+                    {% if profile_user.profile.image %}
+                    <img src="{{ profile_user.profile.image.url }}" width="180" height="180" style="border-radius: 70%;" alt="">
+                    {% else %}
+                    <img src="https://i.stack.imgur.com/34AD2.jpg" width="180" height="180" style="border-radius: 70%;" alt="">
+                    {% endif %}
+                </div>
+                <div class="col-8">
+                    <h1>{{ profile_user.username }}</h1>
+                    <h3>{{ profile_user.last_name }} {{ profile_user.first_name }}</h3>
+                    <p>{{ profile_user.email }}</p>
+                    <p>{{ profile_user.profile.phone }}</p>
+                    <p>{{ profile_user.date_joined }}</p>
+                </div>
+            </div>
+            {% if user == profile_user %} 
+            <a href="{% url 'user_update' pk=user.pk %}" class="btn btn-success btn-sm mt-2">수정하기</a>
+            <a href="{% url 'password_change' pk=user.pk %}" class="btn btn-primary btn-sm mt-2">비밀번호 변경</a>
+            {% endif %}
+        </article>
+    </div>
+</div>
+{% endblock %}

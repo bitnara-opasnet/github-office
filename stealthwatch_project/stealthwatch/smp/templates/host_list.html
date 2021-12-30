@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h4> Host List </h4>
+    </div>
+    <div class="card-deck">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">client host group 비율</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie">
+                    <canvas id="myPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">used application (last 5 min)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="myBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Host List (last 5 min)</h6>
+        </div>
+        <div class="card-body">
+            <div class="row ml-2 mb-2">
+                <h4 id="HostlistLength"></h4>
+            </div>
+            <div class="row ml-1">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="FlowdataTable" width="100%">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>source IP</th>
+                                <th>source host group</th>
+                                <th>source Port/Protocol</th>
+                                <!-- <th>Application</th> -->
+                                <th>destination IP</th>
+                                <th>destination Port/Protocol</th>
+                                <th>destination host group</th>
+                                <th>start time</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="wrap-loading display-none">
+        <!-- <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i> -->
+        <img src="{% static 'image/loading.gif' %}" alt="loading" />
+    </div> 
+</div>
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+<script src="{% static 'js/palette.js' %}"></script>
+
+<script>
+    var seq = palette('rainbow', 30).map(function(hex) {
+                    return '#' + hex;
+            })
+    // console.log(seq)
+    $.ajax({
+        url: "{% url 'host_list_data' %}",
+        method: "GET",
+        dataType: "json",
+        beforeSend:function(){
+            $('.wrap-loading').removeClass('display-none');
+        },
+        complete:function(){
+            $('.wrap-loading').addClass('display-none');
+        }
+     })
+    .done(function(data) {
+        // console.log(data);
+        trafficApplicationtop10(data.application_list);
+        subjecthostgroupCount(data.subject_list)
+        FlowTable(data.results)
+    })
+    .fail(function() {
+        alert( "error" );
+    });
+
+    function FlowTable(chartdata){
+        var table = $('#FlowdataTable').DataTable({
+            "data": chartdata,
+            "responsive": true, 
+            "columns": [
+                { data: null }, 
+                {
+                    data: "subject.ipAddress",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '/hostdetail/' + row.subject.ipAddress  + '">' + row.subject.ipAddress + '</a>';
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: "subject.hostGroupname",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '">' + row.subject.hostGroupname + '</a>';
+                        }
+                        return data;
+                    }
+                },
+                { data: null, render: function ( data, type, row ) {
+                    return data.subject.portProtocol.port+'/'+data.subject.portProtocol.protocol;
+                }},
+                // { data: "applicationId" },
+                { data: "peer.ipAddress" },
+                { data: null, render: function ( data, type, row ) {
+                    return data.peer.portProtocol.port+'/'+data.peer.portProtocol.protocol;
+                }},
+                { data: "peer.hostGroupname" },
+                { data: "statistics.firstActiveTime" },
+            ],
+            "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+            }],
+        });
+        table.on('order.dt search.dt', function () {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+        console.log(table.rows().count());
+    };
+
+    function trafficApplicationtop10 (chartdata) {
+        var applicationID = [];
+        var applicationCount = [];
+        var insidegroup_traffic = chartdata;
+        chartdata.forEach(function(d, i) {
+            applicationID.push(d.id);
+            applicationCount.push(d.count);
+            }
+        );
+        var ctx = document.getElementById("myBarChart");
+        var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: applicationID,
+            datasets: [{
+                label: 'application count',
+                data: applicationCount,
+                borderColor: "rgba(255, 201, 14, 1)",
+                backgroundColor: "rgba(255, 201, 14, 0.5)",
+                fill: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'application ID'
+                    },
+                }],
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        autoSkip: false,
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'count'
+                    }
+                }]
+            }
+        }
+        });
+    };
+    function subjecthostgroupCount (chartdata) {
+        var grName = [];
+        var grCount = [];
+        var subjecthostgroup_count = chartdata;
+        chartdata.forEach(function(d, i) {
+            // console.log(d, i);
+            grName.push(d.name);
+            grCount.push(d.count);
+            }
+        );
+        // console.log(grName);
+        // console.log(trafficByte);
+
+        var ctx = document.getElementById("myPieChart");
+        var myPieChart3 = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: grName,
+            datasets: [{
+              data: grCount,
+              backgroundColor: seq,
+              hoverBorderColor: "rgba(234, 236, 244, 1)",
+              hoverOffset: 4,
+              borderWidth: 0
+            }],
+          },
+          options: {
+            maintainAspectRatio: false,
+            tooltips: {
+              backgroundColor: "rgb(255,255,255)",
+              bodyFontColor: "#858796",
+              borderColor: '#dddfeb',
+              xPadding: 15,
+              yPadding: 15,
+              displayColors: false,
+              caretPadding: 10,
+            },
+            legend: {
+              position: 'right'
+            },
+            cutoutPercentage: 0,
+          },
+        });
+    }
+</script>
+{% endblock %}

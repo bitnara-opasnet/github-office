@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %} 
+<div class="container-fluid">
+    <div class="card">
+        <h3 class="card-header">Settings</h3>
+        <article class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <form method="post" action="" enctype="multipart/form-data">{% csrf_token %}
+                        <div class="row form-group">
+                            <label class="col-2 form-control-user">IP address:</label>
+                            <div class="col-4">
+                                {{form.ipaddress}}
+                            </div>
+                        </div>
+                        <div class="row form-group">
+                            <label class="col-2 form-control-user">Username:</label>
+                            <div class="col-4">
+                                {{form.username}}
+                            </div>
+                        </div>
+                        <div class="row form-group"> 
+                            <label class="col-2 form-control-user">Password:</label>
+                            <div class="col-4">
+                               {{form.password}} 
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm">저장</button>
+                        <input type="button" class="btn btn-secondary btn-sm" value="취소" onClick="javascript:history.go(-1);">
+                    </form>
+
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+<script type="text/javascript">
+    // $(document).ready(function(){
+    //     var password = document.getElementById("password").value;
+        // document.getElementById("password").value = "*".repeat(password.length);
+    //     $('#password').val('text2');
+    //     console.log(password);
+    // });
+</script>
+{% endblock %}
