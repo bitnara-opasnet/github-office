@@ -19,9 +19,6 @@ import pandas as pd
 
 from lib.api_call import ApiCall, ConfingApi
 
-def getKey(list) :
-    return list['total']
-
 # Create your views here.
 def index(request):
     # return render(request, 'index.html')
@@ -124,12 +121,13 @@ class HostGroupList(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.GET.get('hostgroup') == None:
-            hostgroup = 1
-        else:
+        if self.request.GET.get('hostgroup'):
             hostgroup = self.request.GET.get('hostgroup')
-        print(hostgroup)
+        else:
+            hostgroup = 1
+        # print(hostgroup)
         hostgroups_list = self.api_call.get_hostgroup_list()
+
         if hostgroups_list is not None:
             for i in hostgroups_list[0]['root']: 
                 # print(i['name'])
@@ -197,6 +195,9 @@ class HostGroupDetailData(View):
     api_config = ConfingApi().config_api()
     api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
     tag_list = TagList.objects.all()
+    def getKey(self, list) :
+        return list['total']
+
     def get(self, request, id, hostgroup):
         results = {}
         print(hostgroup)
@@ -212,7 +213,7 @@ class HostGroupDetailData(View):
                 outbound_sum += j['value']['outboundByteCount']
                 total_sum = inbound_sum + outbound_sum
             applications_traffic.append({'id': i['header']['applicationId'], 'total': total_sum, 'inbound': inbound_sum, 'outbound': outbound_sum})
-        applications_traffic.sort(key=getKey, reverse=True)
+        applications_traffic.sort(key=self.getKey, reverse=True)
         applications_traffic = applications_traffic[0:10]
 
         if hostgroup == 1:
@@ -230,10 +231,12 @@ class HostGroupDetailData(View):
         for i in flow_results:
             i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
             i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
-        ip = []; first_time = [];
+        ip = []
+        first_time = []
         for i in flow_results:
             ip.append(i['subject']['ipAddress'])
             first_time.append(i['statistics']['firstActiveTime'])
+
         df = pd.DataFrame({'ip': ip, 'first_time': first_time})
         df['count'] = df.groupby('ip')['ip'].transform('count')
         df = df.drop_duplicates(['ip'], keep='first')
@@ -247,7 +250,6 @@ class HostDetail(TemplateView):
     template_name = 'host_detail.html'
     api_config = ConfingApi().config_api()
     api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -316,7 +318,7 @@ class HostListData(View):
             else:
                 print(i['subject'].get('hostGroupIds'))
                 
-        application = []; subject_name = []
+        application = []; subject_name = []; 
         date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
         for i in flow_results:
             i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
