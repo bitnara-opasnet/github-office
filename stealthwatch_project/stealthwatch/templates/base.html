@@ -59,10 +59,26 @@
                     <i class="fas fa-laptop"></i>
                     <span>Monitor</span>
                 </a>
-                <div id="collapseMonitor" class="collapse {% if request.resolver_match.url_name == 'hostgroup_list' or request.resolver_match.url_name == 'host_list' %}show{% endif %}" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <!-- <div id="collapseMonitor" class="collapse {% if request.resolver_match.url_name == 'hostgroup_list' or request.resolver_match.url_name == 'host_list' %}show{% endif %}" aria-labelledby="headingTwo" data-parent="#accordionSidebar"> -->
+                <div id="collapseMonitor" class="collapse {% if 'hostgroups' in request.path %}show{% endif %}" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item {% if request.resolver_match.url_name == 'hostgroup_list' %}active{% endif %}" href="{% url 'hostgroup_list' %}">Host Group List</a>
                         <a class="collapse-item {% if request.resolver_match.url_name == 'host_list' %}active{% endif %}" href="{% url 'host_list' %}">Host List</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseSummaryMonitor" aria-expanded="true" aria-controls="collapseSummaryMonitor">
+                    <i class="fas fa-laptop"></i>
+                    <span>Summary Monitor</span>
+                </a>
+                <!-- <div id="collapseSummaryMonitor" class="collapse {% if request.resolver_match.url_name == 'summary_flow_applications' or request.resolver_match.url_name == 'summary_flow_host' or request.resolver_match.url_name == 'summary_flow_conversations' %}show{% endif %}" aria-labelledby="headingTwo" data-parent="#accordionSidebar"> -->
+                <div id="collapseSummaryMonitor" class="collapse {% if 'flowreport' in request.path %}show{% endif %}" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item {% if request.resolver_match.url_name == 'summary_flow_host' %}active{% endif %}" href="{% url 'summary_flow_host' %}">Hosts</a>
+                        <a class="collapse-item {% if request.resolver_match.url_name == 'summary_flow_applications' %}active{% endif %}" href="{% url 'summary_flow_applications' %}">Appilcation</a>
+                        <a class="collapse-item {% if request.resolver_match.url_name == 'summary_flow_conversations' %}active{% endif %}" href="{% url 'summary_flow_conversations' %}">Conversation</a>
+
                     </div>
                 </div>
             </li>

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-3">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>sections</th>
+                        <th>top-hosts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for host in hosts_flow_results %}
+                    <tr>
+                        <td>{{forloop.counter}}</td>
+                        <td>
+                            <p>host: {{host.host.ipAddress}}</p>
+                            <p>deviceId: {{host.deviceId}}</p>
+                            <p>percent: {{host.percent}}</p>
+                            <p>records: {{host.records}}</p>
+                            <p>bytes: {{host.bytes}}</p>
+                            <p>packets: {{host.packets}}</p>
+                            <p>flows: {{host.flows}}</p>
+                            <!-- {{host}} -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-3">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>top-application</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in applications_flow_results %}
+                    <tr>
+                        <td>
+                            <p>application: {{application.application}}</p>
+                            <p>deviceId: {{application.deviceId}}</p>
+                            <p>percent: {{application.percent}}</p>
+                            <p>records: {{application.records}}</p>
+                            <p>bytes: {{application.bytes}}</p>
+                            <p>packets: {{application.packets}}</p>
+                            <p>flows: {{application.flows}}</p>
+                            <!-- {{application}} -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-3">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>top-services</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services_flow_results %}
+                    <tr>
+                        <td>
+                            <p>service: {{service.service}}</p>
+                            <p>deviceId: {{service.deviceId}}</p>
+                            <p>percent: {{service.percent}}</p>
+                            <p>records: {{service.records}}</p>
+                            <p>bytes: {{service.bytes}}</p>
+                            <p>packets: {{service.packets}}</p>
+                            <p>flows: {{service.flows}}</p>
+                            <!-- {{service}} -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-3">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>top-conversations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for conversation in conversations_flow_results %}
+                    <tr>
+                        <td>
+                            <p>port/protocol: {{conversation.portProtocol.service.ports}}</p>
+                            <p>deviceId: {{conversation.deviceId}}</p>
+                            <p>percent: {{conversation.percent}}</p>
+                            <p>records: {{conversation.records}}</p>
+                            <p>bytes: {{conversation.bytes}}</p>
+                            <p>packets: {{conversation.packets}}</p>
+                            <p>flows: {{conversation.flows}}</p>
+                            <!-- {{conversation}} -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

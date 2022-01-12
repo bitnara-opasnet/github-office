@@ -18,6 +18,12 @@ import pytz
 import pandas as pd
 
 from lib.api_call import ApiCall, ConfingApi
+from lib.portnum_to_name import CSVFileIO
+
+csv_file_io = CSVFileIO('service-names-port-numbers.csv', ',')
+port_dict = csv_file_io.transfer_portname()
+csv_file_io = CSVFileIO('country_code_flags.csv', ',')
+flag_dict = csv_file_io.get_flag_url()
 
 # Create your views here.
 def index(request):
@@ -115,23 +121,20 @@ class ApiConfigView(LoginRequiredMixin, View):
 # Host Groups List
 class HostGroupList(TemplateView):
     template_name = 'hostgroups_list.html'
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
 
     def get_context_data(self, **kwargs):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         context = super().get_context_data(**kwargs)
         if self.request.GET.get('hostgroup'):
             hostgroup = self.request.GET.get('hostgroup')
         else:
             hostgroup = 1
         # print(hostgroup)
-        hostgroups_list = self.api_call.get_hostgroup_list()
+        hostgroups_list = api_call.get_hostgroup_list()
 
-        if hostgroups_list is not None:
-            for i in hostgroups_list[0]['root']: 
-                # print(i['name'])
-                # if i['name'] == 'Inside Hosts':
+        if hostgroups_list:
+            for i in hostgroups_list[0]['root']:  
                 if i['id'] == int(hostgroup):
                     host_list = i['children']
             context['host_list'] = host_list
@@ -141,42 +144,44 @@ class HostGroupList(TemplateView):
         return context
 
 class HostGroupListData(View):
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
-
     def get(self, request, hostgroup):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
         results = {}
         print(hostgroup)
-        hostgroups_traffic = self.api_call.get_hostgroups_traffic()
-        for i in hostgroups_traffic[0]['resultDto']:
-            if i['rootTagId'] == int(hostgroup):
-                insidegroup_traffic = i['tagTraffic']
-        for i in self.tag_list:
-            for j in insidegroup_traffic:
-                if j['tagId'] == i.tagid:
-                    j['name'] = i.name
-        results['results'] = insidegroup_traffic
+        hostgroups_traffic = api_call.get_hostgroups_traffic()
+        if hostgroups_traffic: 
+            for i in hostgroups_traffic[0]['resultDto']:
+                if i['rootTagId'] == int(hostgroup):
+                    insidegroup_traffic = i['tagTraffic']
+            for i in tag_list:
+                for j in insidegroup_traffic:
+                    if j['tagId'] == i.tagid:
+                        j['name'] = i.name
+            results['results'] = insidegroup_traffic
+        else: 
+            results['results'] = None
+
         return JsonResponse(results)
 
 # Host Group Detail
 class HostGroupDetail(TemplateView):
     template_name = 'hostgroups_detail.html'
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
 
     def get_context_data(self, **kwargs):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         context = super().get_context_data(**kwargs)
-        hostgroup_detail = self.api_call.get_hostgroup_detail(self.kwargs['id'])
-        if self.request.GET.get('hostgroup') == None:
-            hostgroup = 1
-        else:
+        hostgroup_detail = api_call.get_hostgroup_detail(self.kwargs['id'])
+        if self.request.GET.get('hostgroup'):
             hostgroup = self.request.GET.get('hostgroup')
+        else:
+            hostgroup = 1
         print(hostgroup)
 
-        hostgroups_list = self.api_call.get_hostgroup_list()
-        if hostgroups_list is not None:
+        hostgroups_list = api_call.get_hostgroup_list()
+        if hostgroups_list:
             for i in hostgroups_list[0]['root']: 
                 if i['id'] == int(hostgroup):
                     parent_host_list = i['children']
@@ -192,83 +197,113 @@ class HostGroupDetail(TemplateView):
         return context
 
 class HostGroupDetailData(View):
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
     def getKey(self, list) :
         return list['total']
 
     def get(self, request, id, hostgroup):
         results = {}
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
         print(hostgroup)
-        if hostgroup ==1:
-            applications_traffic_result = self.api_call.get_application_traffic(tag_id = id)
-        else:
-            applications_traffic_result = self.api_call.get_application_traffic_outside(tag_id = id)
-        applications_traffic = []
-        for i in applications_traffic_result:
-            inbound_sum = 0; outbound_sum = 0; 
-            for j in i['data']:
-                inbound_sum += j['value']['inboundByteCount']
-                outbound_sum += j['value']['outboundByteCount']
-                total_sum = inbound_sum + outbound_sum
-            applications_traffic.append({'id': i['header']['applicationId'], 'total': total_sum, 'inbound': inbound_sum, 'outbound': outbound_sum})
-        applications_traffic.sort(key=self.getKey, reverse=True)
-        applications_traffic = applications_traffic[0:10]
+
+        # if hostgroup ==1:
+            # applications_traffic_result = api_call.get_application_traffic(tag_id = id)
+        # else:
+        #     applications_traffic_result = api_call.get_application_traffic_outside(tag_id = id)
+        # applications_traffic = []
+        # for i in applications_traffic_result:
+        #     inbound_sum = 0; outbound_sum = 0; 
+        #     for j in i['data']:
+        #         inbound_sum += j['value']['inboundByteCount']
+        #         outbound_sum += j['value']['outboundByteCount']
+        #         total_sum = inbound_sum + outbound_sum
+        #     applications_traffic.append({'id': i['header']['applicationId'], 'total': total_sum, 'inbound': inbound_sum, 'outbound': outbound_sum})
+        # applications_traffic.sort(key=self.getKey, reverse=True)
+        # applications_traffic = applications_traffic[0:10]
 
         if hostgroup == 1:
-            traffic_result = self.api_call.get_traffic(tag_id = id)
+            traffic_result = api_call.get_traffic(tag_id = id)
         else:
-            traffic_result = self.api_call.get_traffic_outside(tag_id = id)
+            traffic_result = api_call.get_traffic_outside(tag_id = id)
         total_traffic = []
         for i in traffic_result['data']:
             total_traffic.append({'timestamp': datetime.datetime.strptime(i['timestamp'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S'), 
                                 'total': i['value']['inboundByteCount']+i['value']['outboundByteCount'], 
                                 'inbound': i['value']['inboundByteCount'], 'outbound': i['value']['outboundByteCount']})
 
-        flow_results = self.api_call.get_host_list(tag_id = id)
+        flow_results = api_call.get_host_list(tag_id = id)
+
         date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
+        ip = []
+        first_time = []
+        destination_port = []
+        destination_protocol = []
+        application = []
         for i in flow_results:
             i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
             i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
-        ip = []
-        first_time = []
-        for i in flow_results:
+
+            if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+            else:
+                i['applicationName'] = 'Unassigned'
+
+            destination_port.append(i['peer']['portProtocol']['port'])
+            destination_protocol.append(i['peer']['portProtocol']['protocol'])
             ip.append(i['subject']['ipAddress'])
             first_time.append(i['statistics']['firstActiveTime'])
+            application.append(i['applicationName'])
+
 
         df = pd.DataFrame({'ip': ip, 'first_time': first_time})
         df['count'] = df.groupby('ip')['ip'].transform('count')
         df = df.drop_duplicates(['ip'], keep='first')
         host_list = df.to_dict('records')
 
-        results = {'applications_traffic': applications_traffic, 'total_traffic': total_traffic, 'host_list': host_list}        
+        df = pd.DataFrame({'protocol': destination_protocol, 'port': destination_port, 'application': application})
+        df['count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
+        df = df.drop_duplicates(['protocol', 'port'], keep='first')
+        udp_list = df[df['protocol'] == 'UDP'].to_dict('records')
+        tcp_list = df[df['protocol'] == 'TCP'].to_dict('records')
+
+        results = {'total_traffic': total_traffic, 'host_list': host_list, 'udp_list': udp_list, 'tcp_list': tcp_list
+        # 'applications_traffic': applications_traffic, 
+        }        
         return JsonResponse(results)
+
+# hostgroups detail port        
+class HostGroupsDetailPort(TemplateView):
+    template_name = 'hostgroups_detail_port.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
 
 # Host Detail
 class HostDetail(TemplateView):
     template_name = 'host_detail.html'
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
 
     def get_context_data(self, **kwargs):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         context = super().get_context_data(**kwargs)
        
-        hostgroup_detail = self.api_call.get_hostgroup_detail(self.kwargs['id'])
+        hostgroup_detail = api_call.get_hostgroup_detail(self.kwargs['id'])
         context['hostgroup_detail'] = hostgroup_detail
         context['host_ip'] = self.kwargs['ip']
 
         return context
 
 class HostDetailData(View):
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
 
     def get(self, request, id, ip):
-        flow_results = self.api_call.get_host_list(source_ip = ip)
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+        flow_results = api_call.get_host_list(source_ip = ip)
         
-        application = []; 
+        application = []
         date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
         for i in flow_results:
             # i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], '%Y-%m-%dT%H:%M:%S.%f+0000')+datetime.timedelta(hours=9)
@@ -276,7 +311,7 @@ class HostDetailData(View):
             i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
             application.append(i['applicationId'])
 
-        for i in self.tag_list:
+        for i in tag_list:
             for j in flow_results:
                 if j['peer']['hostGroupIds'][0] == i.tagid:
                     j['peer']['hostGroupname'] = i.name
@@ -299,55 +334,71 @@ class HostList(TemplateView):
         return context
 
 class HostListData(View):
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
-
     def get(self, request):
-        flow_results = self.api_call.get_host_list(record_limit=1000)
-        for i in self.tag_list:
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+
+        flow_results = api_call.get_host_list(record_limit=1000)
+        for i in tag_list:
             for j in flow_results:
                 if j['subject']['hostGroupIds'][0] == i.tagid:
                     j['subject']['hostGroupname'] = i.name
                 if j['peer']['hostGroupIds'][0] == i.tagid:
                     j['peer']['hostGroupname'] = i.name
         
-        for i in flow_results:
-            if i['subject'].get('hostGroupname'):
-                pass
-            else:
-                print(i['subject'].get('hostGroupIds'))
+        # for i in flow_results:
+        #     if i['subject'].get('hostGroupname'):
+        #         pass
+        #     else:
+        #         print(i['subject'].get('hostGroupIds'))
                 
-        application = []; subject_name = []; 
+        application = []
+        subject_name = []
+        destination_port = []
+        destination_protocol = []
         date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
         for i in flow_results:
             i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
             i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
             i['subject']['hostGroupIds'] = i['subject']['hostGroupIds'][0]
             i['peer']['hostGroupIds'] = i['peer']['hostGroupIds'][0]
-            application.append(i['applicationId'])
+
+            if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+            else:
+                i['applicationName'] = 'Unassigned'
+
             subject_name.append(i['subject']['hostGroupname'])
-        
-        df = pd.DataFrame({'id': application})
-        df['count'] = df.groupby('id')['id'].transform('count')
-        df = df.drop_duplicates(['id'], keep='first')
-        application_list = df.to_dict('records')
+            destination_port.append(i['peer']['portProtocol']['port'])
+            destination_protocol.append(i['peer']['portProtocol']['protocol'])
+            application.append(i['applicationName'])
 
         df = pd.DataFrame({'name': subject_name})
         df['count'] = df.groupby('name')['name'].transform('count')
         df = df.drop_duplicates(['name'], keep='first')
         subject_list = df.to_dict('records')
 
-        results = {'results': flow_results, 'application_list': application_list, 
-        'subject_list': subject_list
+        df = pd.DataFrame({'protocol': destination_protocol, 'port': destination_port, 'application': application})
+        df['count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
+        df = df.drop_duplicates(['protocol', 'port'], keep='first')
+        udp_list = df[df['protocol'] == 'UDP'].to_dict('records')
+        tcp_list = df[df['protocol'] == 'TCP'].to_dict('records')
+        # portprotocol_list = df.to_dict('records')
+
+        results = {'results': flow_results, 'subject_list': subject_list, 'udp_list': udp_list, 'tcp_list': tcp_list, 
         }
         return JsonResponse(results)
 
+class HostListPort(TemplateView):
+    template_name = 'host_list_port.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
 # Flow Search
 class FlowSearch(View):
-    api_config = ConfingApi().config_api()
-    api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-    tag_list = TagList.objects.all()
 
     def get(self, request):
         if request.GET.get('ip'):
@@ -358,6 +409,10 @@ class FlowSearch(View):
         return render(request, 'flow_search.html', context)
     
     def post(self, request):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+
         time_range = request.POST['time']
         record_limit = request.POST['record']
         search_keyword = {'time_range': time_range, 'record_limit': record_limit}
@@ -365,21 +420,21 @@ class FlowSearch(View):
         if request.POST['sourceip']:
             source_ip = request.POST['sourceip']
             search_keyword.update({'source_ip': source_ip})
-            results = self.api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit), source_ip = source_ip)      
+            results = api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit), source_ip = source_ip)      
         else:
-            results = self.api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit))
+            results = api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit))
 
         if request.POST['sourceport']:
             source_port = request.POST['sourceport']
             search_keyword.update({'source_port': source_port})
-            results = self.api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit), source_port = source_port)
+            results = api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit), source_port = source_port)
         
         if request.POST['destinationport']:
             destination_port = request.POST['destinationport']
             search_keyword.update({'destination_port': destination_port})
-            results = self.api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit), destination_port = destination_port)
+            results = api_call.get_host_list(search_time = int(time_range), record_limit = int(record_limit), destination_port = destination_port)
 
-        for i in self.tag_list:
+        for i in tag_list:
             for j in results:
                 if j['subject']['hostGroupIds'][0] == i.tagid:
                     j['subject']['hostGroupname'] = i.name
@@ -390,3 +445,100 @@ class FlowSearch(View):
             i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
         context = {'results': results, 'search_keyword': search_keyword}
         return render(request, 'searched_flow.html', context)
+
+# top flow report 
+class TopFlowReport(TemplateView):
+    template_name = 'top_flow_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+
+        hosts_flow_results = api_call.get_flow_reports(search_item='top-hosts', maxRows=10)
+        services_flow_results = api_call.get_flow_reports(search_item='top-services', maxRows=10)
+        applications_flow_results = api_call.get_flow_reports(search_item='top-applications', maxRows=10)
+        conversations_flow_results = api_call.get_flow_reports(search_item='top-conversations', maxRows=10)
+
+        context['hosts_flow_results'] = hosts_flow_results['results']
+        context['services_flow_results'] = services_flow_results['results']
+        context['applications_flow_results'] = applications_flow_results['results']
+        context['conversations_flow_results'] = conversations_flow_results['results']
+        return context
+
+class SummaryFlowHosts(TemplateView):
+    template_name = 'summary_host_flow.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class SummaryFlowHostsData(View):
+    def get(self, request):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+
+        hosts_flow_results = api_call.get_flow_reports(search_item='top-hosts')
+
+        for i in tag_list:
+            for j in hosts_flow_results['results']:
+                if j['host']['hostGroupIds'][0] == i.tagid:
+                    j['host']['hostGroupname'] = i.name
+
+        for i in hosts_flow_results['results']:
+            if i['host']['country'] in flag_dict:
+                i['host']['flag'] =  flag_dict.get(i['host']['country'])
+            else:
+                i['host']['flag'] = ''
+        
+        results = {'hosts_flow_results': hosts_flow_results}
+        return JsonResponse(results)
+
+class SummaryFlowApplications(TemplateView):
+    template_name = 'summary_applications_flow.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class SummaryFlowApplicationsData(View):
+    def get(self, request):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+
+        applications_flow_results = api_call.get_flow_reports(search_item='top-applications')
+
+        results = {'applications_flow_results': applications_flow_results}
+        return JsonResponse(results)
+
+class SummaryFlowConversations(TemplateView):
+    template_name = 'summary_conversations_flow.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class SummaryFlowConversationsData(View):
+    def get(self, request):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+
+        conversations_flow_results = api_call.get_flow_reports(search_item='top-conversations')
+
+        # for i in conversations_flow_results['results']:
+        #     if i.get('portProtocol').get('service'):
+        #         pass
+        #     else:
+        #         print(i)
+
+        for i in tag_list:
+            for j in conversations_flow_results['results']:
+                if j['host']['hostGroupIds'][0] == i.tagid:
+                    j['host']['hostGroupname'] = i.name
+                if j['peer']['hostGroupIds'][0] == i.tagid:
+                    j['peer']['hostGroupname'] = i.name
+
+        results = {'conversations_flow_results': conversations_flow_results}
+        return JsonResponse(results)

@@ -14,14 +14,28 @@
                 <div class="chart-pie">
                     <canvas id="myPieChart"></canvas>
                 </div>
+                <!-- <div id="js-legend" class="chart-legend"></div> -->
             </div>
         </div>
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">used application (last 5 min)</h6>
+                <h6 class="m-0 font-weight-bold text-primary">UDP port count (last 5 min)
+                    <a class="float-right" href="{% url 'host_list_port' %}?protocol=udp">more</a>
+                </h6>
+                
             </div>
             <div class="card-body">
-                <canvas id="myBarChart"></canvas>
+                <canvas id="UDPBarChart"></canvas>
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">TCP port count (last 5 min)
+                    <a class="float-right" href="{% url 'host_list_port' %}?protocol=tcp">more</a>
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="TCPBarChart"></canvas>
             </div>
         </div>
     </div>
@@ -30,26 +44,28 @@
             <h6 class="m-0 font-weight-bold text-primary">Host List (last 5 min)</h6>
         </div>
         <div class="card-body">
-            <div class="row ml-2 mb-2">
+            <div class="row">
                 <h4 id="HostlistLength"></h4>
             </div>
-            <div class="row ml-1">
-                <div class="table-responsive">
-                    <table class="table table-sm" id="FlowdataTable" width="100%">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>source IP</th>
-                                <th>source host group</th>
-                                <th>source Port/Protocol</th>
-                                <!-- <th>Application</th> -->
-                                <th>destination IP</th>
-                                <th>destination Port/Protocol</th>
-                                <th>destination host group</th>
-                                <th>start time</th>
-                            </tr>
-                        </thead>
-                    </table>
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="FlowdataTable" width="100%">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>source IP</th>
+                                    <th>source host group</th>
+                                    <th>source Port/Protocol</th>
+                                    <th>destination IP</th>
+                                    <th>destination host group</th>
+                                    <th>destination Port/Protocol</th>
+                                    <th>Application</th>
+                                    <th>start time</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,6 +83,7 @@
                     return '#' + hex;
             })
     // console.log(seq)
+
     $.ajax({
         url: "{% url 'host_list_data' %}",
         method: "GET",
@@ -79,10 +96,10 @@
         }
      })
     .done(function(data) {
-        // console.log(data);
-        trafficApplicationtop10(data.application_list);
-        subjecthostgroupCount(data.subject_list)
-        FlowTable(data.results)
+        UDPPortCount(data.udp_list);
+        TCPPortCount(data.tcp_list);
+        subjecthostgroupCount(data.subject_list);
+        FlowTable(data.results);
     })
     .fail(function() {
         alert( "error" );
@@ -115,12 +132,12 @@
                 { data: null, render: function ( data, type, row ) {
                     return data.subject.portProtocol.port+'/'+data.subject.portProtocol.protocol;
                 }},
-                // { data: "applicationId" },
                 { data: "peer.ipAddress" },
+                { data: "peer.hostGroupname" },
                 { data: null, render: function ( data, type, row ) {
                     return data.peer.portProtocol.port+'/'+data.peer.portProtocol.protocol;
                 }},
-                { data: "peer.hostGroupname" },
+                { data: "applicationName" },
                 { data: "statistics.firstActiveTime" },
             ],
             "columnDefs": [{
@@ -137,29 +154,42 @@
         console.log(table.rows().count());
     };
 
-    function trafficApplicationtop10 (chartdata) {
-        var applicationID = [];
-        var applicationCount = [];
-        var insidegroup_traffic = chartdata;
-        chartdata.forEach(function(d, i) {
-            applicationID.push(d.id);
-            applicationCount.push(d.count);
-            }
-        );
-        var ctx = document.getElementById("myBarChart");
+    function UDPPortCount (chartdata) {
+        var udp_port = [];
+        var portName = [];
+        var portCount = [];
+
+        udp_port = chartdata.sort(function(a,b){
+            return b.count - a.count
+        });
+
+        udp_port.forEach(function(d, i) {
+            portCount.push(d.count);
+            if (d.application != 'Unassigned'){
+                portName.push(d.application)
+            }else{
+                portName.push(d.port)
+            };
+        });
+
+
+        var ctx = document.getElementById("UDPBarChart");
         var myBarChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: applicationID,
+            labels: portName,
             datasets: [{
-                label: 'application count',
-                data: applicationCount,
+                label: 'port count',
+                data: portCount,
                 borderColor: "rgba(255, 201, 14, 1)",
-                backgroundColor: "rgba(255, 201, 14, 0.5)",
+                backgroundColor: 'rgba(255, 99, 132)',
                 fill: false,
             }]
         },
         options: {
+            legend:{
+                display: false
+            },                                                                      
             responsive: true,
             tooltips: {
                 mode: 'index',
@@ -173,8 +203,74 @@
                 xAxes: [{
                     display: true,
                     scaleLabel: {
+                        display: false,
+                        labelString: 'port'
+                    },
+                }],
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        autoSkip: false,
+                    },
+                    scaleLabel: {
                         display: true,
-                        labelString: 'application ID'
+                        labelString: 'count'
+                    }
+                }]
+            }
+        }
+        });
+    };
+    function TCPPortCount (chartdata) {
+        var portName = [];
+        var portCount = [];
+        var tcp_port = [];
+
+        tcp_port = chartdata.sort(function(a,b){
+            return b.count - a.count
+        });
+
+        tcp_port.forEach(function(d, i) {
+            // portNum.push(d.port);
+            portCount.push(d.count);
+            if (d.application != 'Unassigned'){
+                portName.push(d.application)
+            }else{
+                portName.push(d.port)
+            }
+        });
+            
+
+        var ctx = document.getElementById("TCPBarChart");
+        var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: portName,
+            datasets: [{
+                label: 'port count',
+                data: portCount,
+                borderColor: "rgba(255, 201, 14, 1)",
+                backgroundColor: 'rgba(54, 162, 235)',
+                fill: false,
+            }]
+        },
+        options: {
+            legend:{display: false},
+            responsive: true,
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: false,
+                        labelString: 'port'
                     },
                 }],
                 yAxes: [{
@@ -197,12 +293,14 @@
         var subjecthostgroup_count = chartdata;
         chartdata.forEach(function(d, i) {
             // console.log(d, i);
+            // if(i<10){
+            //     grName.push(d.name);
+            //     grCount.push(d.count);
+            // }
             grName.push(d.name);
             grCount.push(d.count);
             }
         );
-        // console.log(grName);
-        // console.log(trafficByte);
 
         var ctx = document.getElementById("myPieChart");
         var myPieChart3 = new Chart(ctx, {
@@ -218,7 +316,8 @@
             }],
           },
           options: {
-            maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false, //false일 경우 div크기에 맞춰서 그려짐
             tooltips: {
               backgroundColor: "rgb(255,255,255)",
               bodyFontColor: "#858796",
@@ -229,11 +328,16 @@
               caretPadding: 10,
             },
             legend: {
-              position: 'right'
+              display: true,
+              position: 'right',
+              labels: {
+                fontSize: 11
+              }
             },
             cutoutPercentage: 0,
           },
         });
-    }
+        // document.getElementById('js-legend').innerHTML = myPieChart3.generateLegend();
+    };
 </script>
 {% endblock %}

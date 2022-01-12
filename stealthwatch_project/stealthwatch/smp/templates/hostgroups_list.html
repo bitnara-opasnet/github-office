@@ -49,13 +49,11 @@
                         </ul>        
                         {% endfor %}
                     </div> -->
-
-
                     {% for host in host_list %}
                     <div class="card border-left-warning h-100 py-2 ml-2 mt-2">
                         <div class="card-body">
                             <div class="row">
-                                <div style="width: 150px; height: 20px;">
+                                <div style="width: 10vw; height: 2vh;">
                                     {% if host.children|length == 0 %}
                                     <a href="{% url 'hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
                                     {% else %}
@@ -126,28 +124,43 @@
     $(document).ready(function() {
         $("select[name=hostgroup]").val("{{ hostgroup }}");
         $('select[name=hostgroup]').change(function () {
-        console.log($('select[name=hostgroup]').val());
-        hostgroup = $('select[name=hostgroup]').val();
-        $('#hostgroupform').submit();
-    });
+            console.log($('select[name=hostgroup]').val());
+            hostgroup = $('select[name=hostgroup]').val();
+            $('#hostgroupform').submit();
+        });
 
-    function searchParam(key) {
-        return new URLSearchParams(location.search).get(key);
-    };
-    console.log(searchParam('hostgroup'));
-
-    if (searchParam('hostgroup') == 0){
-            var select_url = "{% url 'hostgroup_list_data' hostgroup=0 %}"
-        } else {
-            var select_url = "{% url 'hostgroup_list_data' hostgroup=1 %}"
+        var Bpstohumansize = function(bpssize, si) {
+            var thresh = si ? 1000:1024;
+            if (Math.abs(bpssize) < thresh) {
+                return parseFloat(bpssize.toFixed(2)) + 'bps';
+            }
+            var units = si ? ['kbps', 'Mbps', 'Gbps', 'Tbps'] : ['kibps', 'Mibps', 'Gibps', 'Tibps'];
+            var i = -1;
+            do {
+                bpssize /= thresh 
+                ++i
+            } while (Math.abs(bpssize) >= thresh && i < units.length -1);
+            return parseFloat(bpssize.toFixed(2)) + units[i]
         }
-    // console.log(select_url)
 
-    var seq = palette('rainbow', 10).map(function(hex) {
-                        return '#' + hex;
-                })
-    // console.log(seq)
+        function searchParam(key) {
+            return new URLSearchParams(location.search).get(key);
+        };
+        console.log(searchParam('hostgroup'));
 
+        if (searchParam('hostgroup') == 0){
+                var select_url = "{% url 'hostgroup_list_data' hostgroup=0 %}"
+            } else {
+                var select_url = "{% url 'hostgroup_list_data' hostgroup=1 %}"
+            }
+        // console.log(select_url)
+
+        var seq = palette('rainbow', 10).map(function(hex) {
+                            return '#' + hex;
+                    })
+        // console.log(seq)
+    
+    
     $.ajax({
         url: select_url,
         method: "GET",
@@ -229,7 +242,7 @@
         data: {
             labels: grName,
             datasets: [{
-                label: 'total traffic(Byte)',
+                label: 'total traffic',
                 data: trafficByte,
                 borderColor: "rgba(255, 201, 14, 1)",
                 backgroundColor: "rgba(129, 193, 71, 0.8)",
@@ -251,13 +264,15 @@
                     display: true,
                     scaleLabel: {
                         display: true,
-                        labelString: 'total traffic(Byte)'
+                        labelString: 'total traffic'
                     },
                     ticks:{
                         autoSkip: false,
                         callback: function(value, index){
-                            if(value.toString().length >= 10) return (value/1024**3).toFixed(2) + "GB";
-                            else return (value/1024**2).toFixed(2) + "MB";
+                            // console.log(parseFloat(Bpstohumansize(value, true)))
+                            return (Bpstohumansize(value, true));
+                            // if(value.toString().length >= 10) return (value/1000**3).toFixed(2) + "GB";
+                            // else return (value/1000**2).toFixed(2) + "MB";
                         }
                     }
                 }],
@@ -285,11 +300,16 @@
                     { 
                         data: "totalTrafficBytes", 
                         "render": function(data, row) {
-                            if(data.toString().length >= 10) return (data/1000**3).toLocaleString() + "GB";
-                            else return (data/1000**2).toLocaleString() + "MB";
-                        }},
-
+                            return Bpstohumansize(data, true);
+                            // if(data.toString().length>=10) return (data/1000**3).toLocaleString() + "GB";
+                            // else return (data/1000**2).toLocaleString() + "MB";
+                        }
+                    },
                 ],
+                "lengthChange": false,
+                "info": false, 
+                "ordering": false, 
+                "displayLength": 5,
                 "columnDefs": [{
                 "searchable": false,
                 "orderable": false,
@@ -303,6 +323,8 @@
                 }).draw();
             // console.log(table.rows().count());
         };
+
+
 
 });
 </script>
