@@ -173,10 +173,10 @@
         }
         })
     .done(function(data) {
-        // console.log(data.results);
-        // trafficChartByGroup(data.results);
-        trafficTable(data.results);
-        trafficApplicationtop10(data.results)
+        if (data != '' ){
+            trafficTable(data.results);
+            trafficApplicationtop10(data.results)
+        }
     })
     .fail(function() {
         alert( "error" );
@@ -192,8 +192,7 @@
                 grName.push(d.name);
                 trafficByte.push(d.totalTrafficBytes);
             }
-            }
-        );
+        });
         var ctx = document.getElementById("myPieChart");
         var myPieChart3 = new Chart(ctx, {
             type: 'pie',
@@ -229,13 +228,14 @@
         var grName = [];
         var trafficByte = [];
         var insidegroup_traffic = chartdata;
-        chartdata.forEach(function(d, i) {
-            if(i<10){
-                grName.push(d.name);
-                trafficByte.push(d.totalTrafficBytes);
-            }
-            }
-        );
+        if (chartdata != null){
+            chartdata.forEach(function(d, i) {
+                if(i<10){
+                    grName.push(d.name);
+                    trafficByte.push(d.totalTrafficBytes);
+                }
+            });
+        }
         var ctx = document.getElementById("myBarChart");
         var myBarChart = new Chart(ctx, {
         type: 'horizontalBar',

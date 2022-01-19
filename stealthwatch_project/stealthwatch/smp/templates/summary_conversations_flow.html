@@ -21,7 +21,7 @@
         </div>
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Conversation Bytes Rate (Top10)</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Top10 Conversation Bytes Rate (last 5 min)</h6>
             </div>
             <div class="card-body">
                 <canvas id="myPieChart"></canvas>
@@ -32,7 +32,7 @@
     <!-- bar chart -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">TCP Connections (last 5 min)</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Top 10 TCP Connections (last 5 min)</h6>
         </div>
         <div class="card-body">
             <div style="position:relative; height:250px;">
@@ -109,12 +109,23 @@
     });
 
     function FlowTable(chartdata){
+        var server_icon = '<i class="fas fa-server"></i>'
+        var client_icon = '<i class="fas fa-laptop"></i>'
         var table = $('#FlowdataTable').DataTable({
             "data": chartdata,
             "responsive": true, 
             "columns": [
                 { data: null }, 
-                { data: "hostRole" },
+                { 
+                    data: "hostRole",
+                    "render": function (data, type, row, meta){
+                        if (data == "SERVER"){
+                            return server_icon + ' ' + data
+                        }else{
+                            return client_icon + ' '+ data
+                        }
+                    }
+                },
                 { data: "host.ipAddress" },
                 { data: "host.hostGroupname" },
                 { data: null, render: function ( data, type, row ) {
@@ -128,7 +139,16 @@
                         return data.portProtocol.port+'/'+data.portProtocol.protocol;
                     }
                 }},
-                { data: "peerRole" },
+                { 
+                    data: "peerRole",
+                    "render": function (data, type, row, meta){
+                        if (data == "SERVER"){
+                            return server_icon + ' ' + data
+                        }else{
+                            return client_icon + ' '+ data
+                        }
+                    }
+                },
                 { data: "peer.ipAddress" },
                 { data: "peer.hostGroupname" },
                 { data: "flows" },
@@ -141,14 +161,14 @@
                     if (data.host.hasOwnProperty("name")){
                         return data.host.name +' (' + data.host.ipAddress + ')';
                     }else{
-                        return '';
+                        return 'N/A';
                     }
                 }},
                 { data: null, render: function ( data, type, row ) {
                     if (data.peer.hasOwnProperty("name")){
                         return data.peer.name +' (' + data.peer.ipAddress + ')';
                     }else{
-                        return '';
+                        return 'N/A';
                     }
                 }},
             ],
@@ -287,14 +307,25 @@
         });
     };
     function TotalSummary(chartdata){
-        document.getElementById('TotalFlows').innerHTML = 'Total Flows: ' + chartdata.flows + '개';
-        document.getElementById('TotalPackets').innerHTML = 'Total Packets: ' + chartdata.packets.toLocaleString('ko-KR') + '개';
-        document.getElementById('TotalBytes').innerHTML = 'Total Bytes: ' + chartdata.bytes.toLocaleString('ko-KR') + ' bytes';
-        document.getElementById('TotaltrafficRateMax').innerHTML = 'Total Traffic Rate Max: ' + chartdata.trafficRateMax + '%';
-        document.getElementById('TotaltrafficRateAvg').innerHTML = 'Total Traffic Rate Average: ' + chartdata.trafficRateAvg + '%';
         if (chartdata.hasOwnProperty("connections")){
             document.getElementById('TotalConnections').innerHTML = 'Total TCP Connections: ' + chartdata.connections + '개';
         };
+        if (chartdata.hasOwnProperty("flows")){
+            document.getElementById('TotalFlows').innerHTML = 'Total Flows: ' + chartdata.flows + '개';        
+        };
+        if (chartdata.hasOwnProperty("packets")){
+            document.getElementById('TotalPackets').innerHTML = 'Total Packets: ' + chartdata.packets.toLocaleString('ko-KR') + '개';
+    
+        };        
+        if (chartdata.hasOwnProperty("bytes")){
+            document.getElementById('TotalBytes').innerHTML = 'Total Bytes: ' + chartdata.bytes.toLocaleString('ko-KR') + ' bytes';
+        };        
+        if (chartdata.hasOwnProperty("trafficRateMax")){
+            document.getElementById('TotaltrafficRateMax').innerHTML = 'Total Traffic Rate Max: ' + chartdata.trafficRateMax + '%';
+        };        
+        if (chartdata.hasOwnProperty("trafficRateAvg")){
+            document.getElementById('TotaltrafficRateAvg').innerHTML = 'Total Traffic Rate Average: ' + chartdata.trafficRateAvg + '%';
+        }; 
     }
 </script>
 {% endblock %}

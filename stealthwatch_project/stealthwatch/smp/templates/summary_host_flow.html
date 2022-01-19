@@ -52,7 +52,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="table-responsive">
-                        <table class="table table-sm text-nowrap" id="FlowdataTable" width="100%">
+                        <table class="table compact stripe text-nowrap hover" id="FlowdataTable" width="100%">
                             <thead>
                                 <tr>
                                     <th class="col-1">#</th>
@@ -211,7 +211,7 @@
                     if (data.host.hasOwnProperty("name")){
                         return data.host.name;
                     }else{
-                        return '';
+                        return 'N/A';
                     }
                 }},
             ],

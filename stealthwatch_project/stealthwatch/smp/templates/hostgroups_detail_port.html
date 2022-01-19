@@ -68,9 +68,9 @@
 
     console.log(searchParam('hostgroup'));
     if (searchParam('hostgroup') == 0){
-            var select_url = "{% url 'hostgroup_detail_data' hostgroup=0 id=" + id + " %}"
+            var select_url = "{% url 'hostgroup_detail_data' hostgroup=0 id=hostgroup_detail.id %}"
         } else {
-            var select_url = "{% url 'hostgroup_detail_data' hostgroup=1 id=" + id + " %}"
+            var select_url = "{% url 'hostgroup_detail_data' hostgroup=1 id=hostgroup_detail.id %}"
         }
     console.log(select_url)
 
@@ -137,24 +137,26 @@
                 { data: "peer.portProtocol.port" },
                 { data: "peer.ipAddress" },
                 { data: "peer.hostGroupname" },
-                {
-                    data: "subject.ipAddress",
-                    "render": function (data, type, row, meta) {
-                        if (type === 'display') {
-                            data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '/hostdetail/' + row.subject.ipAddress  + '">' + row.subject.ipAddress + '</a>';
-                        }
-                        return data;
-                    }
-                },
-                {
-                    data: "subject.hostGroupname",
-                    "render": function (data, type, row, meta) {
-                        if (type === 'display') {
-                            data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '">' + row.subject.hostGroupname + '</a>';
-                        }
-                        return data;
-                    }
-                },
+                { data: "subject.ipAddress" },
+                { data: "subject.hostGroupname" },
+                // {
+                //     data: "subject.ipAddress",
+                //     "render": function (data, type, row, meta) {
+                //         if (type === 'display') {
+                //             data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '/hostdetail/' + row.subject.ipAddress  + '">' + row.subject.ipAddress + '</a>';
+                //         }
+                //         return data;
+                //     }
+                // },
+                // {
+                //     data: "subject.hostGroupname",
+                //     "render": function (data, type, row, meta) {
+                //         if (type === 'display') {
+                //             data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '">' + row.subject.hostGroupname + '</a>';
+                //         }
+                //         return data;
+                //     }
+                // },
                 { data: null, render: function ( data, type, row ) {
                     return data.subject.portProtocol.port+'/'+data.subject.portProtocol.protocol;
                 }},

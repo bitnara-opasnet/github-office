@@ -30,8 +30,7 @@ class ApiCall(object):
         }
         api_session = requests.Session()
         try: 
-            response = api_session.request("POST", url, verify=False, data=login_request_data, timeout=3)
-
+            response = api_session.request("POST", url, verify=False, data=login_request_data, timeout=5)
             for cookie in response.cookies:
                 if cookie.name == 'XSRF-TOKEN':
                     xsrf_token = cookie.value
@@ -48,7 +47,7 @@ class ApiCall(object):
         url = 'https://' + self.ip + '/sw-reporting/v1/tenants/'
         headers = self.get_auth()
 
-        if headers is not None: 
+        if headers: 
             conn = http.client.HTTPSConnection(self.ip, 443, context=ssl._create_unverified_context())
             conn.request("GET", url, headers=headers)
             res = conn.getresponse()
@@ -64,7 +63,7 @@ class ApiCall(object):
         url = 'https://' + self.ip + '/smc-configuration/rest/v1/tenants/' + self.tenant_id + '/tags/tree'
         headers = self.get_auth()
 
-        if headers is not None: 
+        if headers: 
             conn = http.client.HTTPSConnection(self.ip, 443, context=ssl._create_unverified_context())
             conn.request("GET", url, headers=headers)
             res = conn.getresponse().read().decode("utf-8")
@@ -77,7 +76,7 @@ class ApiCall(object):
     def get_hostgroup_detail(self, tag_id):
         url = 'https://' + self.ip + '/smc-configuration/rest/v1/tenants/' + self.tenant_id + '/tags/' + str(tag_id)
         headers = self.get_auth()
-        if headers is not None: 
+        if headers: 
             conn = http.client.HTTPSConnection(self.ip, 443, context=ssl._create_unverified_context())
             conn.request("GET", url, headers=headers)
             res = conn.getresponse().read().decode("utf-8")
@@ -114,100 +113,77 @@ class ApiCall(object):
             start_timestamp = start_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
             # print(end_timestamp, start_timestamp)
 
-            if tag_id == '' and source_ip == '':
-                request_data = {
-                    "startDateTime": start_timestamp,
-                    "endDateTime": end_timestamp,
-                    "recordLimit": record_limit,
-
-                }
-            elif source_ip != '':
+            request_data = {
+                "startDateTime": start_timestamp,
+                "endDateTime": end_timestamp,
+                "recordLimit": record_limit,
+            }
+            if source_ip:
                 if source_ip.startswith('!'):
-                    request_data = {
-                        "startDateTime": start_timestamp,
-                        "endDateTime": end_timestamp,
-                        "recordLimit": record_limit,
+                    request_data.update({
                         "subject": {
                             "ipAddresses": {
                                 "includes": [],
                                 "excludes": [source_ip[1:]]
                             },
                         }
-                    }
+                    })
                 else:   
-                    request_data = {
-                        "startDateTime": start_timestamp,
-                        "endDateTime": end_timestamp,
-                        "recordLimit": record_limit,
+                    request_data.update({
                         "subject": {
                             "ipAddresses": {
                                 "includes": [source_ip],
                                 "excludes": []
                             },
                         }
-                    }  
-            elif source_port != '':
+                    })  
+            if source_port:
                 if source_port.startswith('!'):
-                    request_data = {
-                        "startDateTime": start_timestamp,
-                        "endDateTime": end_timestamp,
-                        "recordLimit": record_limit,
+                    request_data.update({
                         "subject": {
                             "tcpUdpPorts": {
                                 "includes": [],
                                 "excludes": [source_port[1:]]
                             },
                         }
-                    }
+                    })
                 else:   
-                    request_data = {
-                        "startDateTime": start_timestamp,
-                        "endDateTime": end_timestamp,
-                        "recordLimit": record_limit,
+                    request_data.update({
                         "subject": {
                             "tcpUdpPorts": {
                                 "includes": [source_port],
                                 "excludes": []
                             },
                         }
-                    }
-            elif destination_port != '':
+                    })
+            if destination_port:
                 if destination_port.startswith('!'):
-                    request_data = {
-                        "startDateTime": start_timestamp,
-                        "endDateTime": end_timestamp,
-                        "recordLimit": record_limit,
+                    request_data.update({
                         "subject": {
                             "tcpUdpPorts": {
                                 "includes": [],
                                 "excludes": [destination_port[1:]]
                             },
                         }
-                    }
+                    })
                 else:   
-                    request_data = {
-                        "startDateTime": start_timestamp,
-                        "endDateTime": end_timestamp,
-                        "recordLimit": record_limit,
+                    request_data.update({
                         "subject": {
                             "tcpUdpPorts": {
                                 "includes": [destination_port],
                                 "excludes": []
                             },
                         }
-                    }                                              
-            else:
-                request_data = {
-                    "startDateTime": start_timestamp,
-                    "endDateTime": end_timestamp,
-                    "recordLimit": record_limit,
+                    })                                             
+            if tag_id:
+                request_data.update({
                     "subject": {
                         "hostGroups": {
                         "includes": [tag_id],
                         "excludes": []
                         },
                     }
-                }
+                })
             url = 'https://' + self.ip + '/sw-reporting/v2/tenants/' + self.tenant_id + '/flows/queries'
             request_headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
             response = api_session.request("POST", url, verify=False, data=json.dumps(request_data), headers=request_headers)
@@ -232,7 +208,7 @@ class ApiCall(object):
 
     def get_hostgroups_traffic(self, tag_id=1):
         api_session = self.get_api_session()
-        if api_session is not None:
+        if api_session:
             end_datetime = datetime.datetime.now(pytz.timezone('utc'))
             start_datetime = end_datetime - datetime.timedelta(days=7)
             end_timestamp = end_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -262,7 +238,7 @@ class ApiCall(object):
     def get_traffic(self, tag_id):
         traffic_url = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id  + '/internalHosts/tags/' + str(tag_id) + '/traffic/hourly'
         headers = self.get_auth()
-        if headers is not None: 
+        if headers: 
             end_datetime = datetime.datetime.now(pytz.timezone('utc'))
             start_datetime = end_datetime - datetime.timedelta(days=7)
             start_timestamp = int(time.mktime(start_datetime.timetuple())*1000)
@@ -280,7 +256,7 @@ class ApiCall(object):
     def get_application_traffic(self, tag_id):
         traffic_url = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id  + '/internalHosts/tags/' + str(tag_id) + '/applications/traffic/hourly'
         headers = self.get_auth()
-        if headers is not None: 
+        if headers: 
             end_datetime = datetime.datetime.now(pytz.timezone('utc'))
             start_datetime = end_datetime - datetime.timedelta(hours=12)
             start_timestamp = int(time.mktime(start_datetime.timetuple())*1000)
@@ -298,7 +274,7 @@ class ApiCall(object):
     def get_traffic_outside(self, tag_id):
         traffic_url = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id  + '/externalHosts/tags/' + str(tag_id) + '/traffic/hourly'
         headers = self.get_auth()
-        if headers is not None: 
+        if headers: 
             end_datetime = datetime.datetime.now(pytz.timezone('utc'))
             start_datetime = end_datetime - datetime.timedelta(days=7)
             start_timestamp = int(time.mktime(start_datetime.timetuple())*1000)
@@ -316,7 +292,7 @@ class ApiCall(object):
     def get_application_traffic_outside(self, tag_id):
         traffic_url = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id  + '/externalHosts/tags/' + str(tag_id) + '/applications/traffic/hourly'
         headers = self.get_auth()
-        if headers is not None: 
+        if headers: 
             end_datetime = datetime.datetime.now(pytz.timezone('utc'))
             start_datetime = end_datetime - datetime.timedelta(hours=12)
             start_timestamp = int(time.mktime(start_datetime.timetuple())*1000)
@@ -330,3 +306,50 @@ class ApiCall(object):
             return traffic_hourly
         else:
             return None
+
+    def get_flow_reports(self, search_time=5, search_item='', maxRows=1000, tags='', ipaddress=''):
+        api_session = self.get_api_session()
+        if api_session:
+            end_datetime = datetime.datetime.now(pytz.timezone('utc'))
+            start_datetime = end_datetime - datetime.timedelta(minutes=search_time)
+            end_timestamp = end_datetime.strftime('%Y-%m-%dT%H:%M:%S.000')
+            start_timestamp = start_datetime.strftime('%Y-%m-%dT%H:%M:%S.000')
+            request_data = {
+                "startTime": start_timestamp,
+                "endTime": end_timestamp,
+                "maxRows": maxRows,
+            }
+            if tags:
+                request_data.update({"subject": 
+                                        {"tags":{
+                                            "includes":
+                                            [tags],
+                                            }
+                                        }
+                                    })
+            if ipaddress:
+                request_data.update({"subject": 
+                                        {"ipAddresses":{
+                                            "includes":
+                                            [ipaddress],
+                                            }
+                                        }
+                                    })                
+
+            url = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id + '/flow-reports/' + search_item + '/queries'
+
+            request_headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+            response = api_session.request("POST", url, verify=False, data=json.dumps(request_data), headers=request_headers)
+            search = json.loads(response.content)["data"]
+
+            # Perform the query to initiate the search
+            URL = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id + '/flow-reports/' + search_item + '/queries/' + search["queryId"]
+            response = api_session.request("GET", URL, verify=False, data=json.dumps(request_data))
+            search = json.loads(response.content)["data"]
+
+            URL = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id + '/flow-reports/' + search_item + '/results/' + search["queryId"]
+            response = api_session.request("GET", URL, verify=False)
+            results = json.loads(response.content)["data"]
+        else:
+            results = None
+        return results

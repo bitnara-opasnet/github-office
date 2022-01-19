@@ -29,7 +29,7 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">UDP port count (last 5 min)
-                    
+                    <!-- <a class="float-right" href="{% url 'hostgroups_detail_port' %}?protocol=udp">more</a> -->
                 </h6>
             </div>
             <div class="card-body">
@@ -89,13 +89,15 @@
             </div>
             <div class="row ml-1">
                 <div class="table-responsive">
-                    <table class="table table-sm" id="dataTable3" width="100%">
+                    <table class="table compact stripe text-nowrap hover" id="FlowdataTable" width="100%">
                         <thead>
                             <tr>
                                 <th class="col-1">#</th>
                                 <th class="col-2">host ip</th>
-                                <th class="col-4">Last access time</th>
+                                <th class="col-2">host group</th>
                                 <th class="col-2">flow count</th>
+                                <th class="col-4">Last access time</th>
+                                <th class="col-2">country</th>
                                 <th class="col-3">user name (ISE 연동)</th>
                             </tr>
                         </thead>
@@ -104,6 +106,7 @@
             </div>
         </div>
     </div>
+    <div id="host_list"></div>
 
     <div class="wrap-loading display-none">
         <img src="{% static 'image/loading.gif' %}" alt="loading" />
@@ -142,66 +145,30 @@
         }
      })
     .done(function(data) {
-        // trafficApplicationtop10(data.applications_traffic);
         TotaltrafficByte(data.total_traffic);
-        HostListTable(data.host_list)
         UDPPortCount(data.udp_list);
         TCPPortCount(data.tcp_list);
+        HostListTable(data.host_list);
+        console.log(data.host_list)
     })
-    .fail(function() {
-        alert( "error" );
+    // .fail(function() {
+    //     alert( "error" );
+    // });
+    .fail(function(request,status,error) {
+        alert("code = "+ request.status + " message = " + request.responseText + " error = " + error)
     });
 
-    function trafficApplicationtop10 (chartdata) {
-        var AppName = [];
-        var trafficByte = [];
-        var applications_traffic = chartdata;
-        chartdata.forEach(function(d, i) {
-            AppName.push(d.id);
-            trafficByte.push(d.total);
-            }
-        );
-
-        var ctx = document.getElementById("myPieChart3");
-        var myPieChart3 = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: AppName,
-            datasets: [{
-              data: trafficByte,
-              backgroundColor: seq,
-              hoverBorderColor: "rgba(234, 236, 244, 1)",
-              hoverOffset: 4,
-              borderWidth: 0
-            }],
-          },
-          options: {
-            maintainAspectRatio: false,
-            tooltips: {
-              backgroundColor: "rgb(255,255,255)",
-              bodyFontColor: "#858796",
-              borderColor: '#dddfeb',
-              xPadding: 15,
-              yPadding: 15,
-              displayColors: false,
-              caretPadding: 10,
-            },
-            legend: {
-              position: 'right'
-            },
-            cutoutPercentage: 0,
-          },
-        });
-    }
     function TotaltrafficByte (chartdata) {
         var TrafficLabels = [];
         var TotaltrafficByte = [];
         var applications_traffic = chartdata;
-        chartdata.forEach(function(d, i) {
-            TrafficLabels.push(d.timestamp);
-            TotaltrafficByte.push(d.total);
-            }
-        );
+        if (chartdata != null){
+            chartdata.forEach(function(d, i) {
+                TrafficLabels.push(d.timestamp);
+                TotaltrafficByte.push(d.total);
+                }
+            );
+        }
 
         var ctx = document.getElementById("myAreaChart");
         var myLineChart = new Chart(ctx, {
@@ -210,7 +177,7 @@
             labels: TrafficLabels,
             datasets: [{
             label: "traffic(Byte)",
-            lineTension: 0.3,
+            lineTension: 0.1,
             backgroundColor: "rgba(78, 115, 223, 0.05)",
             borderColor: "rgba(78, 115, 223, 1)",
             data: TotaltrafficByte,
@@ -241,7 +208,7 @@
                     maxTicksLimit: 7,
                     fontSize : 10,
                     callback: function(value, index){
-                        console.log(typeof value);
+                        // console.log(typeof value);
                             return value;
                         }
                 }
@@ -268,19 +235,20 @@
             display: false
             },
             tooltips: {
-            backgroundColor: "rgb(255,255,255)",
-            bodyFontColor: "#858796",
-            titleMarginBottom: 10,
-            titleFontColor: '#6e707e',
-            titleFontSize: 14,
-            borderColor: '#dddfeb',
-            borderWidth: 1,
-            xPadding: 15,
-            yPadding: 15,
-            displayColors: false,
-            intersect: false,
-            mode: 'index',
-            caretPadding: 10,
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                titleMarginBottom: 10,
+                titleFontColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                intersect: false,
+                mode: 'index',
+                caretPadding: 10,
+
             }
         }
         });
@@ -289,20 +257,20 @@
         var udp_port = [];
         var portName = [];
         var portCount = [];
-
-        udp_port = chartdata.sort(function(a,b){
-            return b.count - a.count
-        });
-
-        udp_port.forEach(function(d, i) {
-            portCount.push(d.count);
-            if (d.application != 'Unassigned'){
-                portName.push(d.application)
-            }else{
-                portName.push(d.port)
-            };
-        });
-
+        if (chartdata != null) {
+            udp_port = chartdata.sort(function(a,b){
+                return b.port_count - a.port_count
+            });
+    
+            udp_port.forEach(function(d, i) {
+                portCount.push(d.port_count);
+                if (d.applicationName != 'Unassigned'){
+                    portName.push(d.applicationName)
+                }else{
+                    portName.push(d.port)
+                };
+            });
+        }
 
         var ctx = document.getElementById("UDPBarChart");
         var myBarChart = new Chart(ctx, {
@@ -357,20 +325,20 @@
         var portCount = [];
         var tcp_port = [];
 
-        tcp_port = chartdata.sort(function(a,b){
-            return b.count - a.count
-        });
-
-        tcp_port.forEach(function(d, i) {
-            // portNum.push(d.port);
-            portCount.push(d.count);
-            if (d.application != 'Unassigned'){
-                portName.push(d.application)
-            }else{
-                portName.push(d.port)
-            }
-        });
-            
+        if (chartdata != null){
+            tcp_port = chartdata.sort(function(a,b){
+                return b.port_count - a.port_count
+            });
+    
+            tcp_port.forEach(function(d, i) {
+                portCount.push(d.port_count);
+                if (d.applicationName != 'Unassigned'){
+                    portName.push(d.applicationName)
+                }else{
+                    portName.push(d.port)
+                }
+            });
+        } 
 
         var ctx = document.getElementById("TCPBarChart");
         var myBarChart = new Chart(ctx, {
@@ -418,25 +386,52 @@
         }
         });
     };
+
     function HostListTable(chartdata){ 
-        var GroupID = {{hostgroup_detail.id}};
-        var table = $('#dataTable3').DataTable({
+        var image_url = "/static/image/flags/";
+        var current_url = "{% url 'hostgroup_detail' id=hostgroup_detail.id %}"
+        console.log(current_url)
+        // var GroupID = {{hostgroup_detail.id}};
+        var table = $('#FlowdataTable').DataTable({
             "responsive": true, 
             "order": [[ 3, "desc" ]],
             "data": chartdata,
             "columns": [
                 { data: null },
                 {
-                    data: "ip",
+                    data: "ipAddress",
                     "render": function (data, type, row, meta) {
                         if (type === 'display') {
-                            data = '<a href="' + GroupID + '/hostdetail/' + row.ip + '">' + row.ip + '</a>';
+                            data = '<a href="' + current_url + 'hostdetail/'  + row.ipAddress + '">' + row.ipAddress + '</a>';
+
                         }
                         return data;
                     }
                 },
-                { data: "first_time" },
-                { data: "count" },
+                { data: "hostGroupname" },
+                { data: "flow_count" },
+                { data: "firstActiveTime" },
+                {
+                    data: "countryflag",
+                    "render": function (data, type, row, meta) {
+                        if (data ==''){
+                            return 'N/A'
+                        }else{
+                            var flag_link = image_url + data;
+                            return  '<img height="25%" width="25%" src="'+ flag_link +'"/>';
+                        }
+                    }
+                },
+                // {
+                //     data: null, render: function (data, type, row, meta) {
+                //         if (data.countryflag ==''){
+                //             return 'N/A'
+                //         }else{
+                //             var flag_link = image_url + data.countryflag;
+                //             return  '<img height="25%" width="25%" src="'+ flag_link +'"/>';
+                //         }
+                //     }
+                // },
             ],
             "columnDefs": [{
             "searchable": false,
@@ -449,7 +444,6 @@
                     cell.innerHTML = i + 1;
                 });
             }).draw();
-        // console.log(table.rows().count());
         document.getElementById('HostlistLength').innerHTML = 'The number of active host list :' + table.rows().count()
     };
 </script>

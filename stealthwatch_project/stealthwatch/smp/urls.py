@@ -39,4 +39,6 @@ urlpatterns=[
     path('flowreport/conversations/data', views.SummaryFlowConversationsData.as_view(), name='summary_flow_conversations_data'),
     path('flowreport/conversations', views.SummaryFlowConversations.as_view(), name='summary_flow_conversations'),
 
+    path('application/hostgroups/hostgroupdetail/<int:id>/hostdetail/<str:ip>/', views.ApplicationHostDetail.as_view(), name='application_host_detail'),
+    path('application/hostgroups/hostgroupdetail/<int:id>/hostdetail/<str:ip>/data/', views.ApplicationHostDetailData.as_view(), name='application_host_detail_data'),
 ]
