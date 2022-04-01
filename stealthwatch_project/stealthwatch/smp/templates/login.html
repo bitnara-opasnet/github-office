@@ -34,7 +34,7 @@
                                         <h1 class="h4 text-gray-900 mb-4">이미 로그인 되어있습니다.</h1>
                                         <h1 class="h4 text-gray-900 mb-4">{{ request.user.username }} 님</h1>
                                         <input type="button" c lass="btn btn-secondary btn-sm" value="이전" onClick="javascript:history.go(-1);">
-                                        <a href="{% url 'hostgroup_list' %}"><input type="button" c lass="btn btn-secondary btn-sm" value="목록"></a>
+                                        <a href="{% url 'conversation_transaction_summary' %}"><input type="button" c lass="btn btn-secondary btn-sm" value="목록"></a>
                                     </div>
                                     {% else %}
                                     <div class="text-center">

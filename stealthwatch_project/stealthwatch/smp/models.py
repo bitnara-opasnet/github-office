@@ -35,3 +35,17 @@ class TagList(models.Model):
 
     def __str__(self):
         return "{}".format(self.tagid)
+
+class Flag(models.Model):
+    ISO_NO = models.IntegerField(null=True, blank=True)
+    AP2 = models.CharField(max_length=50, null=True, blank=True)
+    AP3 = models.CharField(max_length=50, null=True, blank=True)
+    FLAG = models.CharField(max_length=50, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'flag'
+        verbose_name_plural = 'flags'
+        db_table = 'flag'
+
+    def __str__(self):
+        return "{}".format(self.ISO_NO)

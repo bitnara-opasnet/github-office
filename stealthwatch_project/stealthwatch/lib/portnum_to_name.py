@@ -1,6 +1,7 @@
 import os
 import sys
 import csv
+from smp.models import PortProtocol
 
 # current_directory_path = os.getcwd()
 # csv_file_name = 'service-names-port-numbers.csv'
@@ -27,6 +28,13 @@ class CSVFileIO(object):
             print(err)
         return results
 
+    # def insert_category(self):    
+    #     dictlist = self.get_csv_reader()
+    #     for row in dictlist:
+    #         if not PortProtocol.objects.filter(name=row['servicename']).exists():
+    #             service_name = PortProtocol.objects.create(
+    #                 servicename = row['Service Name'] )
+    #     print('CATEGORY DATA UPLOADED SUCCESSFULY!')  
 
     def transfer_portname(self):
         dictlist = self.get_csv_reader()
@@ -39,13 +47,13 @@ class CSVFileIO(object):
         results = {}
         for i in port_list:
             # results.append({i.get('Port Number'): [i.get('Transport Protocol'), i.get('Service Name'), i.get('Description')]})
-            results[i.get('Port Number')+i.get('Transport Protocol')] = i.get('Service Name')
+            results[i.get('Port Number') + i.get('Transport Protocol')] = i.get('Service Name')
         return results
     
     def export_flag_url(self):
         dictlist = self.get_csv_reader()
         for i in list(dictlist):
-            i['flag']= i['AP2'].lower()+'.png'
+            i['flag'] = i['AP2'].lower() + '.png'
 
         fieldnames = list(dictlist[0].keys())
         f = open('country_code_flags.csv', 'w')

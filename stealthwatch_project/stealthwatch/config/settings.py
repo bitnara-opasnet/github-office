@@ -89,7 +89,7 @@ DATABASES = {
         'PASSWORD': 'qkrwjdtn07!',
         'HOST': 'localhost',
         'PORT': '5432'
-     }
+    },
 }
 
 
@@ -144,5 +144,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media') 
 
-LOGIN_REDIRECT_URL = '/hostgroups'
+LOGIN_REDIRECT_URL = '/conversation/summary/'
 LOGOUT_REDIRECT_URL = '/accounts/login'

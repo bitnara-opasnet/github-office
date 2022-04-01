@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h4> Host List </h4>
+        <h4> UDP port </h4>
     </div>
     <div class="row">
         <div class="col">
@@ -46,7 +46,7 @@
                                     <th>source IP</th>
                                     <th>source host group</th>
                                     <th>source Port/Protocol</th>
-                                    <th>start time</th>
+                                    <th>last active time</th>
                                 </tr>
                             </thead>
                         </table>
@@ -62,7 +62,6 @@
 <script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
 <script src="{% static 'js/palette.js' %}"></script>
 <script>
-    
     function searchParam(key) {
         return new URLSearchParams(location.search).get(key);
     };
@@ -78,7 +77,7 @@
         }
 
     $.ajax({
-        url: "{% url 'host_list_data' %}",
+        url: "{% url 'flow_status_all_flows_data' %}",
         method: "GET",
         dataType: "json",
         beforeSend:function(){
@@ -98,6 +97,7 @@
                 }
             });
             FlowTable(flow_list);
+            console.log(data.udp_list);
         }else{
             PortCountChart(data.tcp_list);
             var flow_list = []
@@ -115,11 +115,6 @@
         location.reload();
     });
 
-    // var FlowTable = function () {
-
-    // };
-    // FlowTable.sf.af
-    // h
     function FlowTable(chartdata){
         var table = $('#FlowdataTable').DataTable({
             "data": chartdata,
@@ -135,7 +130,7 @@
                     data: "subject.ipAddress",
                     "render": function (data, type, row, meta) {
                         if (type === 'display') {
-                            data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '/hostdetail/' + row.subject.ipAddress  + '">' + row.subject.ipAddress + '</a>';
+                            data = '<a href="/flowstatus/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '/hostdetail/' + row.subject.ipAddress  + '">' + row.subject.ipAddress + '</a>';
                         }
                         return data;
                     }
@@ -144,7 +139,7 @@
                     data: "subject.hostGroupname",
                     "render": function (data, type, row, meta) {
                         if (type === 'display') {
-                            data = '<a href="/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '">' + row.subject.hostGroupname + '</a>';
+                            data = '<a href="/flowstatus/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '">' + row.subject.hostGroupname + '</a>';
                         }
                         return data;
                     }
@@ -152,7 +147,7 @@
                 { data: null, render: function ( data, type, row ) {
                     return data.subject.portProtocol.port+'/'+data.subject.portProtocol.protocol;
                 }},
-                { data: "statistics.firstActiveTime" },
+                { data: "statistics.lastActiveTime" },
             ],
             "columnDefs": [{
             "searchable": false,
@@ -174,7 +169,7 @@
         var udp_port = [];
 
         udp_port = chartdata.sort(function(a,b){
-            return b.count - a.count
+            return b.port_count - a.port_count
         });
 
         udp_port.forEach(function(d, i) {
@@ -183,7 +178,7 @@
             }else{
                 portName.push(d.port)
             };
-            portCount.push(d.count);
+            portCount.push(d.port_count);
             }
         );
 

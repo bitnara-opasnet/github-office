@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <h4>Flow Search</h4>
+    <!-- <div class="row">
+        <div class="col">
+            <div class="card shadow mb-4"> 
+                <div class="card-body">
+                    <form action="" method="POST">{% csrf_token %}
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label>time range</label>
+                                <select class="custom-select my-1 mr-sm-2" name="time">
+                                    <option value="5">지난 5분</option>
+                                    <option value="10">지난 10분</option>
+                                    <option value="custom">맞춤 설정</option>
+                                </select>
+                                <input id="datetimes" type="text" name="datetimes" value="{{date}}" class="form-control form-control-md"/>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Record Limit</label>
+                                <select class="custom-select my-1 mr-sm-2" name="record">
+                                    <option value="50">50</option>
+                                    <option value="500">500</option>
+                                    <option value="1000">1000</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row"> 
+                            <div class="col-md-6 mb-3">
+                                <label>Source IP</label>
+                                <input type="text" class="form-control" id="sourceip" name="sourceip" placeholder="192.168.10.10 또는 !192.168.10.10" value="{{ip}}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Source Port/Protocol</label>
+                                <input type="text" class="form-control" id="sourceport" name="sourceport" placeholder="80/tcp 또는 !80/tcp" value="">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label>Destination IP</label>
+                                <input type="text" class="form-control" id="destinationip" name="destinationip" placeholder="192.168.10.10 또는 !192.168.10.10" value="">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Destination Port/Protocol</label>
+                                <input type="text" class="form-control" id="destinationport" name="destinationport" placeholder="80/tcp 또는 !80/tcp" value="">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <input type="submit" class="btn btn-primary btn-sm" value="검색">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div> -->
+    <div class="row">
+        <div class="col-md-12">
+            <form action="" method="POST">{% csrf_token %}
+                <div class="row">
+                    <div class="col-md-1 form-group">
+                        <label for="time" class="col-form-label col-form-label-sm">Time</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="far fa-clock"></i></span>
+                            </div>
+                            <input type="text" name="timeq" class="form-control float-right" id="timeq">
+                            <!-- <select class="form-control form-control-sm" name="time">
+                                <option value="5">지난 5분</option>
+                                <option value="10">지난 10분</option>
+                                <option value="custom">맞춤 설정</option>
+                            </select> -->
+                        </div>
+                    </div>
+                    <div class="col-md-1 form-group"></div>
+                    <div class="col-md-1 form-group">
+                        <label for="devname" class="col-form-label col-form-label-sm">Record Limit</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <div class="form-group">
+                                <select class="form-control form-control-sm" name="record" id="record">
+                                    <option value="50">50</option>
+                                    <option value="500">500</option>
+                                    <option value="1000">1000</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-1 form-group"></div>
+                    <div class="col-md-1 form-group">
+                        <label for="searchstr" class="col-form-label col-form-label-sm">application</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="form-group">
+                            <select class="form-control form-control-sm" name="applicationid" id="applicationid">
+                                <option value="">application 선택</option>
+                                {% for application in application_list %}
+                                <option value={{application.id}}>{{application.name}}</option>
+                                {% endfor %}
+                                <!-- <option value="171">https</option>
+                                <option value="185">ntp</option> -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="row">
+                    <div class="col-md-1 form-group">
+                    <label for="searchstr" class="col-form-label col-form-label-sm">Source IP</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="sourceip" name="sourceip" placeholder="192.168.10.10 또는 !192.168.10.10" value="{{ip}}">
+                        </div>
+                    </div>
+                    <div class="col-md-1 form-group"></div>
+                    <div class="col-md-1 form-group">
+                        <label for="searchstr" class="col-form-label col-form-label-sm">Source Port/Protocol</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="sourceport" name="sourceport" placeholder="80/tcp 또는 !80/tcp" value="">
+                        </div>
+                    </div>
+                    <div class="col-md-1 form-group"></div>
+                    <div class="col-md-1 form-group">
+                        <label for="searchstr" class="col-form-label col-form-label-sm">Source hostgroup</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <div class="form-group">
+                                <select class="form-control form-control-sm" name="sourcegroup" id="sourcegroup">
+                                    <option value="">그룹 선택</option>
+                                    {% for host in host_list %}
+                                    <option value={{host.id}}>{{host.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- <input type="text" class="form-control" id="sourcegroup" name="sourcegroup" value=""> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-1 form-group">
+                    <label for="searchstr" class="col-form-label col-form-label-sm">Destination IP</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="destinationip" name="destinationip" placeholder="192.168.10.10 또는 !192.168.10.10" value="">
+                        </div>
+                    </div>
+                    <div class="col-md-1 form-group"></div>
+                    <div class="col-md-1 form-group">
+                        <label for="searchstr" class="col-form-label col-form-label-sm">Destination Port/Protocol</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="destinationport" name="destinationport" placeholder="80/tcp 또는 !80/tcp" value="">
+                        </div>
+                    </div>
+                    <div class="col-md-1 form-group"></div>
+                    <div class="col-md-1 form-group">
+                        <label for="searchstr" class="col-form-label col-form-label-sm">Destination hostgroup</label>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <div class="input-group input-group-sm">
+                            <div class="form-group">
+                                <select class="form-control form-control-sm" name="destinationgroup" id="destinationgroup">
+                                    <option value="">그룹 선택</option>
+                                    {% for host in host_list %}
+                                    <option value={{host.id}}>{{host.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- <input type="text" class="form-control" id="destinationgroup" name="destinationgroup" value=""> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-12">
+                        <input type="submit" class="btn btn-info btn-sm float-right" value="검색">
+                        <!-- <button type="text" id="SearchBtn" class="btn btn-info btn-sm float-right">
+                            Search
+                        </button> -->
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Flow List</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <h4 id="HostlistLength"></h4>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="FlowdataTable" width="100%">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Source IP</th>
+                                    <th>country</th>
+                                    <th>Source host group</th>
+                                    <th>Source Port/Protocol</th>
+                                    <th>Dest. IP</th>
+                                    <th>Dest. host group</th>
+                                    <th>Dest. Port/Protocol</th>
+                                    <th>last active time</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var now = new Date();
+    var enddate = new Date(now) 
+    now.setMinutes(now.getMinutes() - 5);
+    var startdate = now
+
+    $('input[name="timeq"]').daterangepicker({
+        "timePicker": true,
+        locale: {
+            format: 'YYYY/MM/DD HH:mm'
+        },
+        "startDate": startdate,
+        "endDate": enddate,
+    });
+    $.ajax({
+        url: "{% url 'flow_status_flow_search_data' %}",
+        method: "GET",
+        dataType: "json",
+        beforeSend:function(){
+            $('.wrap-loading').removeClass('display-none');
+        },
+        complete:function(){
+            $('.wrap-loading').addClass('display-none');
+        }
+     })
+    .done(function(data) {
+        if (Object.keys(data).length != 0) {
+            FlowTable(data.flow_results);
+            console.log(data.flow_results)
+        }
+    })
+    .fail(function() {
+        alert( "error" );
+    });
+    function FlowTable(chartdata){
+        var image_url = "/static/image/flags/";
+        var table = $('#FlowdataTable').DataTable({
+            "data": chartdata,
+            "responsive": true, 
+            "columns": [
+                { data: null }, 
+                {
+                    data: "subject.ipAddress",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="/flowstatus/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '/hostdetail/' + row.subject.ipAddress + '">' + row.subject.ipAddress + '</a>';
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: "subject.flag",
+                    "render": function (data, type, row, meta) {
+                        if (data ==''){
+                            return 'N/A'
+                        }else{
+                            var flag_link = image_url + data;
+                            return  '<img height="25%" width="25%" src="'+ flag_link +'"/>';
+                        }
+                    }
+                },
+                {
+                    data: "subject.hostGroupname",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="/flowstatus/hostgroups/hostgroupdetail/' + row.subject.hostGroupIds + '">' + row.subject.hostGroupname + '</a>';
+                        }
+                        return data;
+                    }
+                },
+                { data: null, render: function ( data, type, row ) {
+                    return data.subject.portProtocol.port+'/'+data.subject.portProtocol.protocol;
+                }},
+                { data: "peer.ipAddress" },
+                { data: "peer.hostGroupname" },
+                { data: null, render: function ( data, type, row ) {
+                    if (data.applicationName == 'Unassigned'){
+                        return data.peer.portProtocol.port+'/'+data.peer.portProtocol.protocol;
+                    }else{
+                        return data.peer.portProtocol.port+'/'+data.applicationName.toUpperCase();
+                    }
+                }},
+                { data: "statistics.lastActiveTime" },
+            ],
+            "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+            }],
+        });
+        table.on('order.dt search.dt', function () {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+        console.log(table.rows().count());
+    };
+</script>
+{% endblock %}

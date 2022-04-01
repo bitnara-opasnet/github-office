@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h4>Transaction Flows</h4>
+    </div>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Flow List(last 5 min)</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive" >
+                        <table class="table compact stripe text-nowrap hover" id="FlowdataTable" width="100%">
+                            <thead>
+                                <tr>
+                                    <th class="col-1">#</th>
+                                    <th>source Role</th>
+                                    <th>source ip</th>
+                                    <th>country</th>
+                                    <th>source hostgroup</th>
+                                    <th>port/protocol</th>
+                                    <th>destination Role</th>
+                                    <th>destination IP</th>
+                                    <th>destination host group</th>
+                                    <th>flow counts</th>
+                                    <th>bytes</th>
+                                    <th>packets</th>
+                                    <th>TCP connections</th>
+                                    <th>traffic Rate Max</th>
+                                    <th>traffic Rate Avg</th>
+                                    <th>source domain name</th>
+                                    <th>destination domain name</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="wrap-loading display-none">
+    <img src="{% static 'image/loading.gif' %}" alt="loading" />
+</div> 
+</div>
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+<script src="{% static 'js/palette.js' %}"></script>
+<script>
+    var Bytetohumansize = function(bpssize, si) {
+        var thresh = si ? 1000:1024;
+        if (Math.abs(bpssize) < thresh) {
+            return parseFloat(bpssize.toFixed(2)) + 'B';
+        }
+        var units = si ? ['kB', 'MB', 'GB', 'TB'] : ['KiB', 'MiB', 'GiB', 'TiB'];
+        var i = -1;
+        do {
+            bpssize /= thresh 
+            ++i
+        } while (Math.abs(bpssize) >= thresh && i < units.length -1);
+        return parseFloat(bpssize.toFixed(2)) + units[i]
+    }
+    var seq = palette('rainbow', 30).map(function(hex) {
+                return '#' + hex;
+        })
+    $.ajax({
+        url: "{% url 'conversation_transaction_flow_data' %}",
+        method: "GET",
+        dataType: "json",
+        beforeSend:function(){
+            $('.wrap-loading').removeClass('display-none');
+        },
+        complete:function(){ 
+            $('.wrap-loading').addClass('display-none');
+        }
+     })
+    .done(function(data) {
+        console.log(data)
+        FlowTable(data.conversations_flow_results.results)
+    })
+    .fail(function() {
+        alert( "error" );
+    });
+
+    function FlowTable(chartdata){
+        var image_url = "/static/image/flags/";
+        var server_icon = '<i class="fas fa-server"></i>'
+        var client_icon = '<i class="fas fa-laptop"></i>'
+        var table = $('#FlowdataTable').DataTable({
+            dom:  'flrtpB',
+            buttons: [{
+                // extend: 'csvHtml5',
+                // text: 'Export CSV',
+                extend: 'excel',
+                text: 'Export excel',
+                charset: 'UTF-8',
+                title: 'Transaction Flow',
+                footer: true,
+                className: 'btn btn-sm btn-outline-primary excelBtn',
+                exportOptions: {
+                    columns: [1,2,4,5,6,7,8,9,10,11,12,13,14,15,16]
+                }
+            }],
+            "data": chartdata,
+            // "responsive": true, 
+            "columns": [
+                { data: null }, 
+                { 
+                    data: "hostRole",
+                    "render": function (data, type, row, meta){
+                        if (data == "SERVER"){
+                            return server_icon + ' ' + data
+                        }else{
+                            return client_icon + ' '+ data
+                        }
+                    }
+                },
+                // { data: "host.ipAddress" },
+                {
+                    data: "host.ipAddress",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="/flowstatus/hostgroups/hostgroupdetail/' + row.host.hostGroupIds + '/hostdetail/' + row.host.ipAddress + '">' + row.host.ipAddress + '</a>';
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: "host.flag",
+                    "render": function (data, type, row, meta) {
+                        if (data ==''){
+                            return 'N/A'
+                        }else{
+                            var flag_link = image_url + data;
+                            return  '<img height="25%" width="25%" src="'+ flag_link +'"/>';
+                        }
+                    }
+                },
+                // { data: "host.hostGroupname" },
+                {
+                    data: "host.hostGroupname",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="/flowstatus/hostgroups/hostgroupdetail/' + row.host.hostGroupIds + '">' + row.host.hostGroupname + '</a>';
+                        }
+                        return data;
+                    }
+                },
+                { data: null, render: function ( data, type, row ) {
+                    if (data.portProtocol.hasOwnProperty("service")){
+                        if (data.portProtocol.service.hasOwnProperty("name")){
+                            return data.portProtocol.port+'/'+data.portProtocol.service.name.toUpperCase();
+                        }else{
+                            return data.portProtocol.port+'/'+data.portProtocol.protocol;
+                        }
+                    }else{
+                        return data.portProtocol.port+'/'+data.portProtocol.protocol;
+                    }
+                }},
+                { 
+                    data: "peerRole",
+                    "render": function (data, type, row, meta){
+                        if (data == "SERVER"){
+                            return server_icon + ' ' + data
+                        }else{
+                            return client_icon + ' '+ data
+                        }
+                    }
+                },
+                { data: "peer.ipAddress" },
+                { data: "peer.hostGroupname" },
+                { data: "flows" },
+                { 
+                    data: "bytes",
+                    "render": function(data, row){
+                        return Bytetohumansize(data, true);
+                    }
+                },
+                { data: "packets" },
+                { data: "connections" },
+                { data: "trafficRateMax" },
+                { data: "trafficRateAvg" },
+                { data: null, render: function ( data, type, row ) {
+                    if (data.host.hasOwnProperty("name")){
+                        return data.host.name +' (' + data.host.ipAddress + ')';
+                    }else{
+                        return 'N/A';
+                    }
+                }},
+                { data: null, render: function ( data, type, row ) {
+                    if (data.peer.hasOwnProperty("name")){
+                        return data.peer.name +' (' + data.peer.ipAddress + ')';
+                    }else{
+                        return 'N/A';
+                    }
+                }},
+            ],
+            "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+            }],
+            "displayLength": 25,
+        });
+        table.on('order.dt search.dt', function () {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+                table.cell(this).invalidate('dom');
+            }).draw();
+        // document.getElementById('HostlistLength').innerHTML = 'The number of active host list :' + table.rows().count()
+        console.log(table.rows().count());
+    };
+
+</script>
+{% endblock %}

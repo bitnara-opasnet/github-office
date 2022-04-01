@@ -6,24 +6,29 @@
         <div class="col">
             <div class="card mb-4">
                 <div class="card-body">
-                    <div style="float: left; margin-right: 20px;">지난 {{search_keyword.time_range}} 분(시간범위)</div>
+                    <div style="float: left; margin-right: 20px;">지난 {{search_keyword.search_time}}분(시간범위)</div>
                     <div style="float: left; margin-right: 20px;">{{search_keyword.record_limit}}개(최대기록)</div>
+                    {% if search_keyword.application_id %}
+                    <div style="float: left; margin-right: 20px;">{{applications.name}}</div>
+                    {% endif %}
                     {% if search_keyword.source_ip %}
-                    <div>{{search_keyword.source_ip}}</div>
+                    <div style="float: left; margin-right: 20px;">{{search_keyword.source_ip}}</div>
                     {% endif %}
                     {% if search_keyword.source_port %}
-                    <div>{{search_keyword.source_port}}</div>
+                    <div style="float: left; margin-right: 20px;">{{search_keyword.source_port}}</div>
+                    {% endif %}
+                    {% if sourcegroup %}
+                    <div style="float: left; margin-right: 20px;">{{sourcegroup.name}}</div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
     <div class="table-responsive">
-        <table class="table" id="dataTable" width="100%">
+        <table class="table" id="FlowdataTable" width="100%">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>start time</th>
                     <th>source IP</th>
                     <th>source Port/Protocol</th>
                     <th>source host group</th>
@@ -31,24 +36,43 @@
                     <th>destination IP</th>
                     <th>destination Port/Protocol</th>
                     <th>destination host group</th>
+                    <th>last active time</th>
                 </tr>
             </thead>
             <tbody>
                 {% for result in results %}
                 <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{result.statistics.firstActiveTime}}</td>
+                    <td>{{forloop.counter}}</td>
                     <td>{{result.subject.ipAddress}}</td>
                     <td>{{result.subject.portProtocol.port}}/{{result.subject.portProtocol.protocol}}</td>
                     <td>{{result.subject.hostGroupname}}</td>
-                    <td>{{result.applicationId}}</td>
+                    <td>{{result.applicationName}}</td>
                     <td>{{result.peer.ipAddress}}</td>
                     <td>{{result.peer.portProtocol.port}}/{{result.peer.portProtocol.protocol}}</td>
                     <td>{{result.peer.hostGroupname}}</td>
+                    <td>{{result.statistics.lastActiveTime}}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+<script>
+    $(document).ready(function() {
+        $('#FlowdataTable').DataTable({
+            dom:  'Bfrtip',
+            buttons: [{
+                extend: 'excel',
+                text: 'Export excel',
+                charset: 'UTF-8',
+                title: 'Flow Search',
+                footer: true,
+                className: 'btn btn-sm btn-outline-primary excelBtn',
+                exportOptions: {
+                    columns: [1,2,3,4,5,6,7,8]
+                }
+            }],
+        });
+    });
+</script>
 {% endblock %}

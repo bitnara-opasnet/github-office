@@ -5,7 +5,8 @@ import ssl
 import datetime 
 import time
 import pytz
-import urllib 
+import urllib
+import pandas as pd
 from smp.models import ApiConfig
 
 class ConfingApi(object):
@@ -104,9 +105,9 @@ class ApiCall(object):
             print('timeout')
             return None
     
-    def get_host_list(self, search_time=5, record_limit=500, tag_id='', source_ip='', source_port='', destination_port=''):
-        api_session = self.get_api_session()
-        if api_session is not None:
+    def get_host_list(self, search_time=5, record_limit=500, source_group='', source_ip='', source_port='', destination_ip = '', destination_port='', destination_group='', application_id=''):
+        api_session = self.get_api_session() 
+        if api_session:
             end_datetime = datetime.datetime.now(pytz.timezone('utc'))
             start_datetime = end_datetime - datetime.timedelta(minutes=search_time)
             end_timestamp = end_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -156,10 +157,19 @@ class ApiCall(object):
                             },
                         }
                     })
+            if source_group:
+                request_data.update({
+                    "subject": {
+                        "hostGroups": {
+                        "includes": [source_group],
+                        "excludes": []
+                        },
+                    }
+                })
             if destination_port:
                 if destination_port.startswith('!'):
                     request_data.update({
-                        "subject": {
+                        "peer": {
                             "tcpUdpPorts": {
                                 "includes": [],
                                 "excludes": [destination_port[1:]]
@@ -168,18 +178,46 @@ class ApiCall(object):
                     })
                 else:   
                     request_data.update({
-                        "subject": {
+                        "peer": {
                             "tcpUdpPorts": {
                                 "includes": [destination_port],
                                 "excludes": []
                             },
                         }
-                    })                                             
-            if tag_id:
+                    })
+            if destination_ip:
+                if destination_ip.startswith('!'):
+                    request_data.update({
+                        "peer": {
+                            "ipAddresses": {
+                                "includes": [],
+                                "excludes": [destination_ip[1:]]
+                            },
+                        }
+                    })
+                else:   
+                    request_data.update({
+                        "peer": {
+                            "ipAddresses": {
+                                "includes": [destination_ip],
+                                "excludes": []
+                            },
+                        }
+                    })                                               
+            if destination_group:
                 request_data.update({
-                    "subject": {
+                    "peer": {
                         "hostGroups": {
-                        "includes": [tag_id],
+                        "includes": [destination_group],
+                        "excludes": []
+                        },
+                    }
+                })
+            if application_id:
+                request_data.update({
+                    "flow": {
+                        "applications": {
+                        "includes": [application_id],
                         "excludes": []
                         },
                     }
@@ -253,8 +291,8 @@ class ApiCall(object):
         else:
             return None
     
-    def get_application_traffic(self, tag_id):
-        traffic_url = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id  + '/internalHosts/tags/' + str(tag_id) + '/applications/traffic/hourly'
+    def get_application_traffic(self):
+        traffic_url = 'https://' + self.ip + '/sw-reporting/v1/tenants/' + self.tenant_id  + '/internalHosts/applications/traffic/hourly'
         headers = self.get_auth()
         if headers: 
             end_datetime = datetime.datetime.now(pytz.timezone('utc'))
@@ -353,3 +391,69 @@ class ApiCall(object):
         else:
             results = None
         return results
+
+def flow_results(flow_results, tag_list, port_dict, flag_dict):
+    results = {}
+    now = datetime.datetime.now()
+
+    if flow_results:
+        for i in tag_list:
+            for j in flow_results:
+                if j['subject']['hostGroupIds'][0] == i.tagid:
+                    j['subject']['hostGroupname'] = i.name
+                if j['peer']['hostGroupIds'][0] == i.tagid:
+                    j['peer']['hostGroupname'] = i.name
+                
+        final_list = []
+        date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
+        for i in flow_results:
+            i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
+            i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
+            i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
+            i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S')   
+            i['subject']['hostGroupIds'] = i['subject']['hostGroupIds'][0]
+            i['peer']['hostGroupIds'] = i['peer']['hostGroupIds'][0]
+
+            if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+            else:
+                i['applicationName'] = 'Unassigned'
+            if i['subject']['countryCode'] in flag_dict:
+                i['subject']['flag'] = flag_dict.get(i['subject']['countryCode'])
+            else:
+                i['subject']['flag'] = ''
+
+            # result 딕셔너리 생성
+            result = {}
+            result['subject_name'] = i['subject']['hostGroupname']
+            result['protocol'] = i['peer']['portProtocol']['protocol']
+            result['port'] = i['peer']['portProtocol']['port']
+            result['application'] = i['applicationName']
+            result['bps'] = i['statistics']['byteRate']
+            result['rtt'] = i['statistics']['rttAverage']
+            result['lastActiveTime'] = i['statistics']['lastActiveTime']
+            result['source_ip'] = i['subject']['ipAddress']
+            final_list.append(result)
+
+        # final list 딕셔너리로 dataframe 생성
+        df = pd.DataFrame(final_list)
+        df['subject_count'] = df.groupby('subject_name')['subject_name'].transform('count')
+        df['port_count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
+        
+        subject_list = df.drop_duplicates(['subject_name'], keep='first').to_dict('records')
+        port_df = df.drop_duplicates(['protocol', 'port'], keep='first')
+        udp_list = port_df[port_df['protocol'] == 'UDP'].to_dict('records')
+        tcp_list = port_df[port_df['protocol'] == 'TCP'].to_dict('records')
+
+        # bps array 생성
+        chart_df = df.set_index('lastActiveTime', drop=False)
+        endtime = now - datetime.timedelta(minutes=5)
+        end_timestamp = endtime.strftime('%Y-%m-%d %H:%M:%S')
+        time_df = pd.DataFrame({'time_stamp':pd.date_range(end_timestamp, periods=300, freq='S'), 'time_range':[i for i in range(1, 301)]})
+        time_df = time_df.set_index('time_stamp')
+        result_df = pd.merge(chart_df, time_df, left_index=True, right_index=True, how="right")
+        result_df = result_df.fillna(0)
+        chart_results = result_df.to_dict('records')
+        results = {'results': flow_results, 'subject_list': subject_list, 'udp_list': udp_list, 'tcp_list': tcp_list, 'chart_results': chart_results
+        }
+    return results

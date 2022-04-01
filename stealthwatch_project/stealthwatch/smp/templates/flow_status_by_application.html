@@ -3,10 +3,10 @@
 {% block content %}
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h4>어플리케이션 기준 Flow Summary</h4>
+        <h4>Flow by application</h4>
     </div>
     <div class="card-deck">
-        <div class="card shadow mb-4">
+        <!-- <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Summary</h6>
             </div>
@@ -18,10 +18,10 @@
                 <p id="TotaltrafficRateMax"></p>
                 <p id="TotaltrafficRateAvg"></p>
             </div>
-        </div>
+        </div> -->
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">어플리케이션별 Bytes Rate (Top10)</h6>
+                <h6 class="m-0 font-weight-bold text-primary">어플리케이션별 Bytes</h6>
             </div>
             <div class="card-body">
                 <canvas id="myPieChart"></canvas>
@@ -30,7 +30,7 @@
     </div>
 
     <!-- bar chart -->
-    <div class="card shadow mb-4">
+    <!-- <div class="card shadow mb-4">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">TCP Connections (last 5 min)</h6>
         </div>
@@ -39,11 +39,11 @@
                 <canvas id="BarChart"></canvas>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Flow List(last 5 min)</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Application List(last 5 min)</h6>
         </div>
         <div class="card-body">
             <div class="row">
@@ -76,11 +76,26 @@
 <script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
 <script src="{% static 'js/palette.js' %}"></script>
 <script>
+    var current_url = "{% url 'flow_status_by_application' %}"
+    var Bytetohumansize = function(bpssize, si) {
+        var thresh = si ? 1000:1024;
+        if (Math.abs(bpssize) < thresh) {
+            return parseFloat(bpssize.toFixed(2)) + 'B';
+        }
+        var units = si ? ['kB', 'MB', 'GB', 'TB'] : ['KiB', 'MiB', 'GiB', 'TiB'];
+        var i = -1;
+        do {
+            bpssize /= thresh 
+            ++i
+        } while (Math.abs(bpssize) >= thresh && i < units.length -1);
+        return parseFloat(bpssize.toFixed(2)) + units[i]
+    }
     var seq = palette('rainbow', 30).map(function(hex) {
                 return '#' + hex;
         })
+
     $.ajax({
-        url: "{% url 'summary_flow_applications_data' %}",
+        url: "{% url 'flow_status_by_application_data' %}",
         method: "GET",
         dataType: "json",
         beforeSend:function(){
@@ -91,11 +106,9 @@
         }
      })
     .done(function(data) {
-        console.log(data.applications_flow_results)
+        console.log(data.applications_traffic_results)
         FlowTable(data.applications_flow_results.results)
         BytesRate(data.applications_flow_results.results)
-        TCPConnectionCount(data.applications_flow_results.results)
-        TotalSummary(data.applications_flow_results.summary)
     })
     .fail(function() {
         alert( "error" );
@@ -104,13 +117,27 @@
     function FlowTable(chartdata){
         var table = $('#FlowdataTable').DataTable({
             "data": chartdata,
-            "responsive": true, 
+            // "responsive": true, 
             "columns": [
                 { data: null }, 
-                { data: "application.name" },
+                // { data: "application.name" },
+                { 
+                    data: "application.name",
+                    "render": function(data, type, row, meta){
+                        if (type === 'display'){
+                            data = '<a href="' + current_url + row.application.id + '">' + row.application.name + '</a>'
+                        }
+                        return data;
+                    } 
+                },
                 { data: "hostRole" },
                 { data: "flows" },
-                { data: "bytes" },
+                { 
+                    data: "bytes",
+                    "render": function(data, row){
+                        return Bytetohumansize(data, true);
+                    }
+                },
                 { data: "packets" },
                 { data: "connections" },
                 { data: "trafficRateMax" },
@@ -137,78 +164,22 @@
             if(i<10){
                 ApplicationName.push(d.application.name);
                 // ByteRate.push(d.bytes);
-                ByteRate.push(d.percent);
+                ByteRate.push(d.bytes);
             }
             }
         );
         var ctx = document.getElementById("myPieChart");
         var myPieChart3 = new Chart(ctx, {
-            type: 'pie',
+            type: 'bar',
             data: {
             labels: ApplicationName,
             datasets: [{
                 data: ByteRate,
-                backgroundColor: seq,
+                backgroundColor: seq.slice(2,),
                 hoverBorderColor: "rgba(234, 236, 244, 1)",
                 hoverOffset: 4,
                 borderWidth: 0
             }],
-            },
-            options: {
-            maintainAspectRatio: false,
-            tooltips: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyFontColor: "#858796",
-                borderColor: '#dddfeb',
-                xPadding: 15,
-                yPadding: 15,
-                displayColors: false,
-                caretPadding: 10,
-                callbacks:{
-                    label: function(tooltipItem, data){
-                        var dataset = data.datasets[tooltipItem.datasetIndex];
-                        var currentValue = dataset.data[tooltipItem.index];
-                        return data['labels'][tooltipItem.index] +': ' +  currentValue + "%";
-                    }
-                }
-            },
-            legend: {
-                position: 'right'
-            },
-            cutoutPercentage: 0,
-            },
-        });
-    }
-    // bar chart
-    function TCPConnectionCount (chartdata) {
-        var ApplicationName = [];
-        var TCPConnectionCount = [];
-
-        var tcp_connection = [];
-
-        tcp_connection = chartdata.sort(function(a,b){
-            return b.connections - a.connections
-        });
-
-        tcp_connection.forEach(function(d, i) {
-            if (d.connections != 0){
-                TCPConnectionCount.push(d.connections);
-                ApplicationName.push(d.application.name);
-            }
-        });
-
-        var ctx = document.getElementById("BarChart");
-        var myBarChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ApplicationName,
-                datasets: [{
-                    label: 'count',
-                    data: TCPConnectionCount,
-                    borderColor: "rgba(255, 201, 14, 1)",
-                    backgroundColor: "rgba(129, 193, 71, 0.8)",
-                    fill: false,
-                }]
             },
             options: {
                 legend:{
@@ -220,6 +191,13 @@
                 tooltips: {
                     mode: 'index',
                     intersect: false,
+                    callbacks: {
+                    label: function(tooltipItem, data){
+                        var dataset = data.datasets[tooltipItem.datasetIndex];
+                        var currentValue = dataset.data[tooltipItem.index];
+                        return Bytetohumansize(currentValue, true)
+                    }
+                }
                 },
                 hover: {
                     mode: 'nearest',
@@ -241,22 +219,18 @@
                         },
                         scaleLabel: {
                             display: true,
-                            labelString: 'count'
+                            labelString: 'bytes'
+                        },
+                        ticks:{
+                            autoSkip: false,
+                            callback: function(value, index){
+                                return (Bytetohumansize(value, true));
+                            }
                         }
                     }]
                 }
             }
         });
-    };
-    function TotalSummary(chartdata){
-        document.getElementById('TotalFlows').innerHTML = 'Total Flows: ' + chartdata.flows + '개';
-        document.getElementById('TotalPackets').innerHTML = 'Total Packets: ' + chartdata.packets.toLocaleString('ko-KR') + '개';
-        document.getElementById('TotalBytes').innerHTML = 'Total Bytes: ' + chartdata.bytes.toLocaleString('ko-KR') + ' bytes';
-        document.getElementById('TotaltrafficRateMax').innerHTML = 'Total Traffic Rate Max: ' + chartdata.trafficRateMax + '%';
-        document.getElementById('TotaltrafficRateAvg').innerHTML = 'Total Traffic Rate Average: ' + chartdata.trafficRateAvg + '%';
-        if (chartdata.hasOwnProperty("connections")){
-            document.getElementById('TotalConnections').innerHTML = 'Total TCP Connections: ' + chartdata.connections + '개';
-        };
     }
 </script>
 {% endblock %}

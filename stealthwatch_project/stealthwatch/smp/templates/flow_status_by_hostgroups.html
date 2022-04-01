@@ -2,11 +2,6 @@
 {% load static %}
 {% block content %}
 <div class="container-fluid">
-    <!-- {% if hostgroup == "0" %}
-    <h4> Outside Hosts </h4>
-    {% else %}
-    <h4> Inside Hosts </h4>
-    {% endif %} -->
     <div class="row mb-3">
         <div class="col-3">
             <form method="get" action="" id=hostgroupform>
@@ -19,12 +14,11 @@
         </div>
     </div>
       
-    <!-- <a href="#">Outside Hosts</a> -->
     <div class="row">
         <div class="col">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Host Group List</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Host Group</h6>
                 </div>
                 {% if host_list == None %}
                 <div class="card-body d-sm-flex flex-wrap">
@@ -32,38 +26,31 @@
                 </div>
                 {% else %}
                 <div class="card-body d-sm-flex flex-wrap">
-                    <!-- <div class="row">
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" >{{host_list|length}}</div>
-                        {% for host in host_list %}
-                        <ul class="list-group list-group-horizontal-sm">
-                            {% if host.children|length == 0 %}
-                            <li class="list-group-item list-group-item-action list-group-item-light" style="margin-left: 20px; margin-bottom: 20px; width: 150px;">
-                                <a href="{% url 'hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
-                            </li>
-                            {% else %}
-                            <li class="list-group-item list-group-item-action list-group-item-light" style="margin-left: 20px; margin-bottom: 20px; width: 150px;">
-                                <a href="{% url 'hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
-                                <span class="badge badge-primary badge-pill">{{host.children|length}}</span>
-                            </li>
-                            {% endif %}
-                        </ul>        
-                        {% endfor %}
-                    </div> -->
                     {% for host in host_list %}
-                    <div class="card border-left-warning h-100 py-2 ml-2 mt-2">
+                    <div class="card py-3 ml-2 mt-2" style="width: 10vw; justify-content: center; border-radius: 40px; background-color: #EAECEE;">
+                        <div style="text-align:center; vertical-align: middle;">
+                            {% if host.children|length == 0 %}
+                            <a href="{% url 'flow_status_by_hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                            {% else %}
+                            <a href="{% url 'flow_status_by_hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                            <strong class="mr-3">{{host.children|length}}</strong>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- <div class="card border-left-warning h-100 py-2 ml-2 mt-2">
                         <div class="card-body">
                             <div class="row">
                                 <div style="width: 10vw; height: 2vh;">
                                     {% if host.children|length == 0 %}
-                                    <a href="{% url 'hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                                    <a href="{% url 'flow_status_by_hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
                                     {% else %}
-                                    <a href="{% url 'hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                                    <a href="{% url 'flow_status_by_hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
                                     <strong class="mr-3">{{host.children|length}}</strong>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     {% endfor %} 
 
                 </div>
@@ -80,16 +67,6 @@
                 <canvas id="myBarChart"></canvas>
             </div>
         </div>
-        <!-- <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">그룹별 트래픽 비율 (top 10)</h6>
-            </div>
-            <div class="card-body">
-                <div class="chart-pie">
-                    <canvas id="myPieChart"></canvas>
-                </div>
-            </div>
-        </div> -->
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">그룹별 트래픽</h6>
@@ -149,9 +126,9 @@
         console.log(searchParam('hostgroup'));
 
         if (searchParam('hostgroup') == 0){
-                var select_url = "{% url 'hostgroup_list_data' hostgroup=0 %}"
+                var select_url = "{% url 'flow_status_by_hostgroups_data' hostgroup=0 %}"
             } else {
-                var select_url = "{% url 'hostgroup_list_data' hostgroup=1 %}"
+                var select_url = "{% url 'flow_status_by_hostgroups_data' hostgroup=1 %}"
             }
         // console.log(select_url)
 
@@ -181,49 +158,7 @@
     .fail(function() {
         alert( "error" );
     });
-    
-    function trafficChartByGroup (chartdata) {
-        var grName = [];
-        var trafficByte = [];
-        var insidegroup_traffic = chartdata;
-        chartdata.forEach(function(d, i) {
-            // console.log(d, i);
-            if(i<10){
-                grName.push(d.name);
-                trafficByte.push(d.totalTrafficBytes);
-            }
-        });
-        var ctx = document.getElementById("myPieChart");
-        var myPieChart3 = new Chart(ctx, {
-            type: 'pie',
-            data: {
-            labels: grName,
-            datasets: [{
-                data: trafficByte,
-                backgroundColor: seq,
-                hoverBorderColor: "rgba(234, 236, 244, 1)",
-                hoverOffset: 4,
-                borderWidth: 0
-            }],
-            },
-            options: {
-            maintainAspectRatio: false,
-            tooltips: {
-                backgroundColor: "rgb(255,255,255)",
-                bodyFontColor: "#858796",
-                borderColor: '#dddfeb',
-                xPadding: 15,
-                yPadding: 15,
-                displayColors: false,
-                caretPadding: 10,
-            },
-            legend: {
-                position: 'right'
-            },
-            cutoutPercentage: 0,
-            },
-        });
-    }
+
     function trafficApplicationtop10 (chartdata) {
         var grName = [];
         var trafficByte = [];
@@ -254,6 +189,13 @@
             tooltips: {
                 mode: 'index',
                 intersect: false,
+                callbacks: {
+                    label: function(tooltipItem, data){
+                        var dataset = data.datasets[tooltipItem.datasetIndex];
+                        var currentValue = dataset.data[tooltipItem.index];
+                        return Bpstohumansize(currentValue, true)
+                    }
+                }
             },
             hover: {
                 mode: 'nearest',

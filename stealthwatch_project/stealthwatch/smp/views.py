@@ -12,6 +12,7 @@ from .models import ApiConfig, TagList
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+import csv
 import json
 import datetime
 import pytz
@@ -111,49 +112,124 @@ class ApiConfigView(LoginRequiredMixin, View):
         # return render(request, 'apiconfig.html', {'form': form})
         return self.get(request)
 
+# Conversation summary
+class ConversationTransactionSummary(TemplateView):
+    template_name = 'conversation_transaction_summary.html'
 
-# class ApiConfigView(LoginRequiredMixin, UpdateView): 
-#     model = ApiConfig
-#     form_class = ApiConfigForm
-#     template_name = 'apiconfig.html' 
-#     context_object_name = 'apiconfig'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
 
-#     def get_success_url(self):
-#         return reverse('apiconfig')
+class ConversationTransactionSummaryData(View):
+    def get(self, request):
+        results = {}
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
 
-# Host Groups List
-class HostGroupList(TemplateView):
-    template_name = 'hostgroups_list.html'
+        conversations_flow_results = api_call.get_flow_reports(search_item='top-conversations')
+        # conversations_flow_results = read_json('get_reports_top-conversations.json')
+        
+        final_list = []
+        if conversations_flow_results:
+            for i in conversations_flow_results['results']:
+                results = {}
+                results['port'] = i['portProtocol']['port']
+                results['protocol'] = i['portProtocol']['protocol']
+                # service 이름 정의 여부 확인 ex) 'https'
+                if i['portProtocol'].get('service'):
+                    if i['portProtocol']['service'].get('name'):
+                        results['name'] = i['portProtocol']['service']['name']
+                    else:
+                        results['name'] = 'Unassigned' 
+                else:
+                    results['name'] = 'Unassigned'
+                final_list.append(results)
+
+            # port, protocol별 개수 count
+            df = pd.DataFrame(final_list)
+            df['port_count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
+            port_df = df.drop_duplicates(['protocol', 'port'], keep='first')
+            udp_list = port_df[port_df['protocol'] == 'UDP'].to_dict('records')
+            tcp_list = port_df[port_df['protocol'] == 'TCP'].to_dict('records')
+
+            results = {'conversations_flow_results': conversations_flow_results, 'udp_list': udp_list, 'tcp_list': tcp_list}
+        return JsonResponse(results)
+
+# Conversation flow
+class ConversationTransactionFlows(TemplateView):
+    template_name = 'conversation_transaction_flows.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class ConversationTransactionFlowsData(View):
+    def get(self, request):
+        results = {}
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+
+        # conversations_flow_results = read_json('get_reports_top-conversations.json')
+        conversations_flow_results = api_call.get_flow_reports(search_item='top-conversations')
+        if conversations_flow_results:
+            # host group id - host group name 매핑
+            for i in tag_list:
+                for j in conversations_flow_results['results']:
+                    if j['host']['hostGroupIds'][0] == i.tagid:
+                        j['host']['hostGroupname'] = i.name
+                    if j['peer']['hostGroupIds'][0] == i.tagid:
+                        j['peer']['hostGroupname'] = i.name
+
+            # host country - flag 매핑
+            for i in conversations_flow_results['results']:
+                if i['host']['country'] in flag_dict:
+                    i['host']['flag'] = flag_dict.get(i['host']['country'])
+                else:
+                    i['host']['flag'] = ''
+
+        results = {'conversations_flow_results': conversations_flow_results}
+        return JsonResponse(results)
+
+
+# Flow Status
+class FlowStatusbyGroup(TemplateView):
+    template_name = 'flow_status_by_hostgroups.html'
 
     def get_context_data(self, **kwargs):
         api_config = ConfingApi().config_api()
         api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         context = super().get_context_data(**kwargs)
+
+        # hostgroup이 1이면 inside gorup, 0이면 outside그룹, default=1
         if self.request.GET.get('hostgroup'):
             hostgroup = self.request.GET.get('hostgroup')
         else:
             hostgroup = 1
-        # print(hostgroup)
-        hostgroups_list = api_call.get_hostgroup_list()
-        # hostgroups_list = read_json('get_tag_list.json')
+        hostgroups_list = read_json('tag_list.json')
+        # hostgroups_list = api_call.get_hostgroup_list()
+
         if hostgroups_list:
             for i in hostgroups_list[0]['root']:  
                 if i['id'] == int(hostgroup):
                     host_list = i['children']
             context['host_list'] = host_list
         else:
-            context['hostgroup_detail'] = None
+            context['host_list'] = None
         context['hostgroup'] = hostgroup
         return context
 
-class HostGroupListData(View):
+class FlowStatusbyGroupData(View):
     def get(self, request, hostgroup):
         api_config = ConfingApi().config_api()
         api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         tag_list = TagList.objects.all()
         results = {}
-        print(hostgroup)
+
+        # hostgroups_traffic = read_json('get_traffic_data.json')
         hostgroups_traffic = api_call.get_hostgroups_traffic()
+        # print(hostgroups_traffic)
         
         if hostgroups_traffic: 
             for i in hostgroups_traffic[0]['resultDto']:
@@ -169,26 +245,26 @@ class HostGroupListData(View):
 
         return JsonResponse(results)
 
-# Host Group Detail
-class HostGroupDetail(TemplateView):
-    template_name = 'hostgroups_detail.html'
+class FlowStatusbyGroupDetail(TemplateView):
+    template_name = 'flow_status_by_hostgroups_detail.html'
 
     def get_context_data(self, **kwargs):
         api_config = ConfingApi().config_api()
         api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         context = super().get_context_data(**kwargs)
 
+        # hostgroup detail 정보 호출
+        # hostgroup_detail = read_json('tag_details.json')
         hostgroup_detail = api_call.get_hostgroup_detail(self.kwargs['id'])
-        # hostgroup_detail = read_json('get_tag_details.json')
-
         if self.request.GET.get('hostgroup'):
             hostgroup = self.request.GET.get('hostgroup')
         else:
             hostgroup = 1
-        print(hostgroup)
+        # print(hostgroup)
 
+        # hostgroup 목록 호출
+        # hostgroups_list = read_json('tag_list.json')
         hostgroups_list = api_call.get_hostgroup_list()
-        # hostgroups_list = read_json('get_tag_list.json')
         if hostgroups_list:
             for i in hostgroups_list[0]['root']: 
                 if i['id'] == int(hostgroup):
@@ -204,33 +280,21 @@ class HostGroupDetail(TemplateView):
         context['hostgroup'] = hostgroup
         return context
 
-class HostGroupDetailData(View):
-    def getKey(self, list) :
-        return list['total']
-
-    def get(self, request, id, hostgroup):
+class FlowStatusbyGroupDetailData(View):
+    def get(self, request, **args):
         results = {}
         api_config = ConfingApi().config_api()
         api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         tag_list = TagList.objects.all()
-        print(hostgroup)
+        # print(self.kwargs['id'])
 
-        if hostgroup == 1:
-            traffic_result = api_call.get_traffic(tag_id = id)
-        else:
-            traffic_result = api_call.get_traffic_outside(tag_id = id)
-        
-        total_traffic = []
-        if traffic_result:
-            for i in traffic_result['data']:
-                total_traffic.append({'timestamp': datetime.datetime.strptime(i['timestamp'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S'), 
-                                    'total': i['value']['inboundByteCount']+i['value']['outboundByteCount'], 
-                                    'inbound': i['value']['inboundByteCount'], 'outbound': i['value']['outboundByteCount']}) 
+        # hostgroup flow 호출
+        # flow_results = read_json('get_flow_data_group.json')
+        flow_results = api_call.get_host_list(source_group = self.kwargs['id'])
+        now = datetime.datetime.now()
 
-        flow_results = api_call.get_host_list(tag_id = id)
-        # flow_results = read_json('get_flow_data.json')
-        # print(len(flow_results))
         if flow_results:
+            # hostgroup name 매핑
             for i in tag_list:
                 for j in flow_results:
                     if j['subject']['hostGroupIds'][0] == i.tagid:
@@ -240,11 +304,206 @@ class HostGroupDetailData(View):
 
             date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
             final_list = []
-            for i in flow_results:   
-                i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
-                i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
+            for i in flow_results:
+                # last active time 형태 변경
                 i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
                 i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S') 
+
+                # application name 매핑
+                if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                    i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+                else:
+                    i['applicationName'] = 'Unassigned'
+                
+                # country - flag 매핑
+                if i['subject']['countryCode'] in flag_dict:
+                    i['subject']['flag'] = flag_dict.get(i['subject']['countryCode'])
+                else:
+                    i['subject']['flag'] = ''
+
+                # chart를 그리기 위한 dict생성
+                result = {}
+                result['ipAddress'] = i['subject']['ipAddress']
+                result['firstActiveTime'] = i['statistics']['firstActiveTime']
+                if i['subject'].get('hostGroupname'): 
+                    result['hostGroupname'] = i['subject']['hostGroupname']
+                else:
+                    result['hostGroupname'] = i['subject']['hostGroupIds'][0]      
+                result['protocol'] = i['peer']['portProtocol']['protocol']
+                result['port'] = i['peer']['portProtocol']['port']
+                result['applicationName'] = i['applicationName']
+                result['countryCode'] = i['subject']['countryCode']
+                result['countryflag'] = i['subject']['flag']
+                result['bps'] = i['statistics']['byteRate']
+                result['rtt'] = i['statistics']['rttAverage']
+                result['lastActiveTime'] = i['statistics']['lastActiveTime']
+                final_list.append(result)
+
+            df = pd.DataFrame(final_list)
+            df['flow_count'] = df.groupby('ipAddress')['ipAddress'].transform('count')
+            df['port_count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
+            
+            host_list = df.drop_duplicates(['ipAddress'], keep='first').to_dict('records')
+            port_df = df.drop_duplicates(['protocol', 'port'], keep='first')
+            udp_list = port_df[port_df['protocol'] == 'UDP'].to_dict('records')
+            tcp_list = port_df[port_df['protocol'] == 'TCP'].to_dict('records')
+
+            # bps array 생성
+            chart_df = df.set_index('lastActiveTime', drop=False)
+            endtime = now - datetime.timedelta(minutes=5)
+            end_timestamp = endtime.strftime('%Y-%m-%d %H:%M:%S')
+            time_df = pd.DataFrame({'time_stamp': pd.date_range(end_timestamp, periods=300, freq='S'), 'time_range':[i for i in range(1, 301)]})
+            time_df = time_df.set_index('time_stamp')
+            result_df = pd.merge(chart_df, time_df, left_index=True, right_index=True, how="right")
+            result_df = result_df.fillna(0)
+            chart_results = result_df.to_dict('records')
+
+            results = {'host_list': host_list, 'udp_list': udp_list, 'tcp_list': tcp_list, 'chart_results': chart_results, 
+                    # 'flow_results': flow_results, 
+                    }
+
+        return JsonResponse(results)
+
+# Host Detail
+class FlowStatusbyGroupHostDetail(TemplateView):
+    template_name = 'flow_status_by_hostgroups_host_detail.html'
+
+    def get_context_data(self, **kwargs):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        context = super().get_context_data(**kwargs)
+       
+        # hostgroup_detail = read_json('tag_details.json')
+        hostgroup_detail = api_call.get_hostgroup_detail(self.kwargs['id'])
+        context['hostgroup_detail'] = hostgroup_detail
+        context['host_ip'] = self.kwargs['ip']
+
+        return context
+
+class FlowStatusbyGroupHostDetailData(View):
+
+    def get(self, request, **args):
+        results = {}
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+        # flow_results = read_json('get_flow_data_ip.json')
+        flow_results = api_call.get_host_list(source_ip = self.kwargs['ip'])
+        now = datetime.datetime.now()
+
+        if flow_results: 
+            for i in tag_list:
+                for j in flow_results:
+                    if j['subject']['hostGroupIds'][0] == i.tagid:
+                        j['subject']['hostGroupname'] = i.name
+                    if j['peer']['hostGroupIds'][0] == i.tagid:
+                        j['peer']['hostGroupname'] = i.name
+
+            chart_list = []
+            date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
+            for i in flow_results:
+                i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
+                i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S')        
+                if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                    i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+                else:
+                    i['applicationName'] = 'Unassigned'
+                if i['subject'].get('hostGroupname') == None: 
+                    i['subject']['hostGroupname'] = i['subject']['hostGroupIds'][0]
+
+                result = {}
+                result['protocol'] = i['peer']['portProtocol']['protocol']
+                result['port'] = i['peer']['portProtocol']['port']
+                result['application'] = i['applicationName']
+
+                result['bps'] = i['statistics']['byteRate']
+                result['rtt'] = i['statistics']['rttAverage']
+                result['lastActiveTime'] = i['statistics']['lastActiveTime']
+                result['destination_ip'] = i['peer']['ipAddress']
+                chart_list.append(result)
+             
+            # bps array 생성
+            chart_df = pd.DataFrame(chart_list)
+            chart_df = chart_df.set_index('lastActiveTime', drop=False)
+            endtime = now - datetime.timedelta(minutes=5)
+            end_timestamp = endtime.strftime('%Y-%m-%d %H:%M:%S')
+            time_df = pd.DataFrame({'time_stamp':pd.date_range(end_timestamp, periods=300, freq='S'), 'time_range':[i for i in range(1, 301)]})
+            time_df = time_df.set_index('time_stamp')
+            result_df = pd.merge(chart_df, time_df, left_index=True, right_index=True, how="right")
+            result_df = result_df.fillna(0)
+            chart_results = result_df.to_dict('records')
+
+            chart_df['port_count'] = chart_df.groupby(['protocol','port'])['protocol'].transform('count')
+            port_df = chart_df.drop_duplicates(['protocol', 'port'], keep='first')
+            udp_list = port_df[port_df['protocol'] == 'UDP'].to_dict('records')
+            tcp_list = port_df[port_df['protocol'] == 'TCP'].to_dict('records')       
+        results = {"flow_results": flow_results, "chart_results": chart_results, 'udp_list': udp_list, 'tcp_list': tcp_list}
+        return JsonResponse(results)
+
+# flow by application
+class FlowStatusbyApplication(TemplateView):
+    template_name = 'flow_status_by_application.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class FlowStatusbyApplicationData(View):
+    def get(self, request):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+
+        # applications_flow_results = read_json('get_reports_top-applications.json')
+        applications_flow_results = api_call.get_flow_reports(search_item='top-applications')
+        applications_traffic_results = api_call.get_application_traffic()
+        # print(applications_traffic_results)
+
+        results = {'applications_flow_results': applications_flow_results, 'applications_traffic_results': applications_traffic_results}
+        with open('flow_status_application.txt', 'wb') as f:
+            pickle.dump(results, f)
+        
+        return JsonResponse(results)
+
+class FlowStatusbyApplicationDetail(TemplateView):
+    template_name = 'flow_status_by_application_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['application_id'] = self.kwargs['id']
+        return context
+
+class FlowStatusbyApplicationDetailData(View):
+    def get(self, request, **args):
+        results = {}
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        tag_list = TagList.objects.all()
+        # flow_results = read_json('get_flow_data_application.json')
+        flow_results = api_call.get_host_list(application_id = self.kwargs['id'])
+
+        if flow_results:
+            for i in tag_list:
+                for j in flow_results:
+                    if j['subject']['hostGroupIds'][0] == i.tagid:
+                        j['subject']['hostGroupname'] = i.name
+                    if j['peer']['hostGroupIds'][0] == i.tagid:
+                        j['peer']['hostGroupname'] = i.name
+
+            with open('flow_status_application.txt', 'rb') as f:
+                data = pickle.load(f)['applications_flow_results']['results']
+
+            applications_results = {}
+            for i in data:
+                if i['application']['id'] == self.kwargs['id']:
+                    applications_results = i
+            application_name = applications_results['application']['name']
+            
+            final_list = []
+            date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
+            for i in flow_results:
+                i['application_name'] = applications_results['application']['name']
+                i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
+                i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S')    
                 if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
                     i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
                 else:
@@ -255,193 +514,95 @@ class HostGroupDetailData(View):
                     i['subject']['flag'] = ''
 
                 result = {}
-                result['ipAddress'] = i['subject']['ipAddress']
-                result['firstActiveTime'] = i['statistics']['firstActiveTime']
-                if i.get('subject').get('hostGroupname'): 
-                    result['hostGroupname'] = i['subject']['hostGroupname']
-                else:
-                    result['hostGroupname'] = i['subject']['hostGroupIds'][0]      
-                result['protocol'] = i['peer']['portProtocol']['protocol']
-                result['port'] = i['peer']['portProtocol']['port']
-                result['applicationName'] = i['applicationName']
-                result['countryCode'] = i['subject']['countryCode']
-                result['countryflag'] = i['subject']['flag']
+                result['subject_name'] = i['subject']['hostGroupname']
                 final_list.append(result)
 
             df = pd.DataFrame(final_list)
-            df['flow_count'] = df.groupby('ipAddress')['ipAddress'].transform('count')
-            df['port_count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
+            df['subject_count'] = df.groupby('subject_name')['subject_name'].transform('count')
+            subject_list = df.drop_duplicates(['subject_name'], keep='first').to_dict('records')
 
-            host_list = df.drop_duplicates(['ipAddress'], keep='first').to_dict('records')
-            port_df = df.drop_duplicates(['protocol', 'port'], keep='first')
-            udp_list = port_df[port_df['protocol'] == 'UDP'].to_dict('records')
-            tcp_list = port_df[port_df['protocol'] == 'TCP'].to_dict('records')
-
-            results = {'total_traffic': total_traffic, 'udp_list': udp_list, 'tcp_list': tcp_list,
-                    'host_list': host_list
-                    }
-            with open('hostgroup_detail.txt', 'wb') as f:
-                pickle.dump(flow_results, f)
+        results = {'flow_results': flow_results, 'subject_list': subject_list, 'application_name': application_name}
         return JsonResponse(results)
 
-# hostgroups detail port        
-class HostGroupsDetailPort(TemplateView):
-    template_name = 'hostgroups_detail_port.html'
 
-    def get_context_data(self, **kwargs):
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-        context = super().get_context_data(**kwargs)
-
-        hostgroup_detail = api_call.get_hostgroup_detail(self.kwargs['id'])
-
-        if self.request.GET.get('hostgroup'):
-            hostgroup = self.request.GET.get('hostgroup')
-        else:
-            hostgroup = 1
-
-        if hostgroup_detail: 
-            context['hostgroup_detail'] = hostgroup_detail
-        else:
-            context['hostgroup_detail'] = None
-        context['hostgroup'] = hostgroup
-        return context
-
-# Host Detail
-class HostDetail(TemplateView):
-    template_name = 'host_detail.html'
-
-    def get_context_data(self, **kwargs):
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-        context = super().get_context_data(**kwargs)
-       
-        hostgroup_detail = api_call.get_hostgroup_detail(self.kwargs['id'])
-        # hostgroup_detail = read_json('get_tag_details.json')
-        context['hostgroup_detail'] = hostgroup_detail
-        context['host_ip'] = self.kwargs['ip']
-
-        return context
-
-class HostDetailData(View):
-
-    def get(self, request, id, ip):
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-        tag_list = TagList.objects.all()
-        flow_results = api_call.get_host_list(source_ip = ip)
-        # with open('hostgroup_detail.txt', 'rb') as f:
-        #     data = pickle.load(f)
-        
-        # flow_results = []
-        # for i in data:
-        #     if i['subject']['ipAddress'] == ip:
-        #         flow_results.append(i)
-
-        for i in tag_list:
-            for j in flow_results:
-                if j['subject']['hostGroupIds'][0] == i.tagid:
-                    j['subject']['hostGroupname'] = i.name
-                if j['peer']['hostGroupIds'][0] == i.tagid:
-                    j['peer']['hostGroupname'] = i.name
-
-        bps_list = []
-        date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
-        for i in flow_results:
-            i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
-            i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
-            i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
-            i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S')        
-            if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
-                i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
-            else:
-                i['applicationName'] = 'Unassigned'
-            if i.get('subject').get('hostGroupname') == None: 
-                i['subject']['hostGroupname'] = i['subject']['hostGroupIds'][0]
-
-            result = {}
-            result['bps'] = i['statistics']['byteRate']
-            result['lastActiveTime'] = i['statistics']['lastActiveTime']
-            result['destination_ip'] = i['peer']['ipAddress']
-            bps_list.append(result)
-    
-        # bps array 생성
-        bps_df = pd.DataFrame(bps_list)
-        bps_df = bps_df.set_index('lastActiveTime', drop=False)
-        endtime = datetime.datetime.now()-datetime.timedelta(minutes=5)
-        end_timestamp = endtime.strftime('%Y-%m-%d %H:%M:%S')
-        time_df = pd.DataFrame({'time_stamp':pd.date_range(end_timestamp, periods=300, freq='S'), 'time_range':[i for i in range(1, 301)]})
-        time_df = time_df.set_index('time_stamp')
-        result_df = pd.merge(bps_df, time_df, left_index=True, right_index=True, how="right")
-        result_df = result_df.fillna(0)
-        bps = result_df.to_dict('records')
-
-        results = {"flow_results": flow_results, "bps": bps}
-        return JsonResponse(results)
-
-# Host List
-class HostList(TemplateView):
-    template_name = 'host_list.html'
+# all flows
+class FlowStatusAllFlows(TemplateView):
+    template_name = 'flow_status_all_flows.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
 
-class HostListData(View):
+
+class FlowStatusAllFlowsData(View):
     def get(self, request):
+        results = {}
         api_config = ConfingApi().config_api()
         api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         tag_list = TagList.objects.all()
 
         flow_results = api_call.get_host_list(record_limit=1000)
-        for i in tag_list:
-            for j in flow_results:
-                if j['subject']['hostGroupIds'][0] == i.tagid:
-                    j['subject']['hostGroupname'] = i.name
-                if j['peer']['hostGroupIds'][0] == i.tagid:
-                    j['peer']['hostGroupname'] = i.name
-        
-        # for i in flow_results:
-        #     if i['subject'].get('hostGroupname'):
-        #         pass
-        #     else:
-        #         print(i['subject'].get('hostGroupIds'))
-                
-        application = []
-        subject_name = []
-        destination_port = []
-        destination_protocol = []
-        date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
-        for i in flow_results:
-            i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
-            i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
-            i['subject']['hostGroupIds'] = i['subject']['hostGroupIds'][0]
-            i['peer']['hostGroupIds'] = i['peer']['hostGroupIds'][0]
+        # flow_results = read_json('get_flow_data.json')
+        now = datetime.datetime.now()
 
-            if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
-                i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
-            else:
-                i['applicationName'] = 'Unassigned'
+        if flow_results:
+            for i in tag_list:
+                for j in flow_results:
+                    if j['subject']['hostGroupIds'][0] == i.tagid:
+                        j['subject']['hostGroupname'] = i.name
+                    if j['peer']['hostGroupIds'][0] == i.tagid:
+                        j['peer']['hostGroupname'] = i.name
+                    
+            final_list = []
+            date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
+            for i in flow_results:
+                i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
+                i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S')   
+                i['subject']['hostGroupIds'] = i['subject']['hostGroupIds'][0]
+                i['peer']['hostGroupIds'] = i['peer']['hostGroupIds'][0]
 
-            subject_name.append(i['subject']['hostGroupname'])
-            destination_port.append(i['peer']['portProtocol']['port'])
-            destination_protocol.append(i['peer']['portProtocol']['protocol'])
-            application.append(i['applicationName'])
+                if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                    i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+                else:
+                    i['applicationName'] = 'Unassigned'
+                if i['subject']['countryCode'] in flag_dict:
+                    i['subject']['flag'] = flag_dict.get(i['subject']['countryCode'])
+                else:
+                    i['subject']['flag'] = ''
 
-        df = pd.DataFrame({'name': subject_name})
-        df['count'] = df.groupby('name')['name'].transform('count')
-        df = df.drop_duplicates(['name'], keep='first')
-        subject_list = df.to_dict('records')
+                # result 딕셔너리 생성
+                result = {}
+                result['subject_name'] = i['subject']['hostGroupname']
+                result['protocol'] = i['peer']['portProtocol']['protocol']
+                result['port'] = i['peer']['portProtocol']['port']
+                result['application'] = i['applicationName']
+                result['bps'] = i['statistics']['byteRate']
+                result['rtt'] = i['statistics']['rttAverage']
+                result['lastActiveTime'] = i['statistics']['lastActiveTime']
+                result['source_ip'] = i['subject']['ipAddress']
+                final_list.append(result)
 
-        df = pd.DataFrame({'protocol': destination_protocol, 'port': destination_port, 'application': application})
-        df['count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
-        df = df.drop_duplicates(['protocol', 'port'], keep='first')
-        udp_list = df[df['protocol'] == 'UDP'].to_dict('records')
-        tcp_list = df[df['protocol'] == 'TCP'].to_dict('records')
-        # portprotocol_list = df.to_dict('records')
+            # final list 딕셔너리로 dataframe 생성
+            df = pd.DataFrame(final_list)
+            df['subject_count'] = df.groupby('subject_name')['subject_name'].transform('count')
+            df['port_count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
+            
+            subject_list = df.drop_duplicates(['subject_name'], keep='first').to_dict('records')
+            port_df = df.drop_duplicates(['protocol', 'port'], keep='first')
+            udp_list = port_df[port_df['protocol'] == 'UDP'].to_dict('records')
+            tcp_list = port_df[port_df['protocol'] == 'TCP'].to_dict('records')
 
-        results = {'results': flow_results, 'subject_list': subject_list, 'udp_list': udp_list, 'tcp_list': tcp_list, 
-        }
+            # bps array 생성
+            chart_df = df.set_index('lastActiveTime', drop=False)
+            endtime = now - datetime.timedelta(minutes=5)
+            end_timestamp = endtime.strftime('%Y-%m-%d %H:%M:%S')
+            time_df = pd.DataFrame({'time_stamp':pd.date_range(end_timestamp, periods=300, freq='S'), 'time_range':[i for i in range(1, 301)]})
+            time_df = time_df.set_index('time_stamp')
+            result_df = pd.merge(chart_df, time_df, left_index=True, right_index=True, how="right")
+            result_df = result_df.fillna(0)
+            chart_results = result_df.to_dict('records')
+            results = {'results': flow_results, 'subject_list': subject_list, 'udp_list': udp_list, 'tcp_list': tcp_list, 'chart_results': chart_results
+            }
         return JsonResponse(results)
 
 class HostListPort(TemplateView):
@@ -451,25 +612,76 @@ class HostListPort(TemplateView):
         context = super().get_context_data(**kwargs)
         return context
 
-# Flow Search
-class FlowSearch(View):
+# flow search
+class FlowStatusFlowSearch(View):
 
     def get(self, request):
+        api_config = ConfingApi().config_api()
+        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
+        context = {}
+
         if request.GET.get('ip'):
             ip = request.GET.get('ip')
         else:
             ip = ''
-        context = {'ip': ip}
-        return render(request, 'flow_search.html', context)
+        context['ip'] = ip
+
+        # hostgroup이 1이면 inside gorup, 0이면 outside그룹, default=1
+        if self.request.GET.get('hostgroup'):
+            hostgroup = self.request.GET.get('hostgroup')
+        else:
+            hostgroup = 1
+        # hostgroups_list = read_json('tag_list.json')
+        hostgroups_list = api_call.get_hostgroup_list()
+
+        if hostgroups_list:
+            for i in hostgroups_list[0]['root']:  
+                if i['id'] == int(hostgroup):
+                    host_list = i['children']
+            context['host_list'] = host_list
+        else:
+            context['host_list'] = None
+        context['hostgroup'] = hostgroup
+
+        with open('flow_status_application.txt', 'rb') as f:
+            data = pickle.load(f)['applications_flow_results']['results']
+
+        application_list  =[]
+        for i in data:
+            applications_results = {}
+            applications_results['id'] = i['application']['id']
+            applications_results['name'] = i['application']['name']
+            application_list.append(applications_results)
+        context['application_list'] = application_list
+        # print(application_list)
+        return render(request, 'flow_status_flow_search.html', context)
     
     def post(self, request):
+        context = {}
         api_config = ConfingApi().config_api()
         api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         tag_list = TagList.objects.all()
 
-        time_range = request.POST['time']
+        date_format = '%Y/%m/%d %H:%M'
+        timeq = request.POST['timeq']
+        time_list = timeq.split(' - ')
+        time_range = (datetime.datetime.strptime(time_list[1], date_format) - datetime.datetime.strptime(time_list[0], date_format)).seconds/60
+        # print(time_range)
         record_limit = request.POST['record']
         search_keyword = {'search_time': int(time_range), 'record_limit': int(record_limit)}
+
+        with open('flow_status_application.txt', 'rb') as f:
+            data = pickle.load(f)['applications_flow_results']['results']
+
+        if request.POST['applicationid']:
+            application_id = request.POST['applicationid']
+            search_keyword.update({'application_id': application_id})
+
+            applications_results = {}
+            for i in data:
+                if i['application']['id'] == int(application_id):
+                    applications_results = i['application']
+            context['applications'] = applications_results
 
         if request.POST['sourceip']:
             source_ip = request.POST['sourceip']
@@ -479,171 +691,88 @@ class FlowSearch(View):
             source_port = request.POST['sourceport']
             search_keyword.update({'source_port': source_port})
 
+        if request.POST['sourcegroup']:
+            source_group = request.POST['sourcegroup']
+            search_keyword.update({'source_group': source_group})
+            sourcegroup_resuslts = {}
+            for i in tag_list:
+                if i.tagid == int(source_group):
+                    sourcegroup_resuslts['id']= i.tagid
+                    sourcegroup_resuslts['name']= i.name
+            context['sourcegroup'] = sourcegroup_resuslts
+
         if request.POST['destinationport']:
             destination_port = request.POST['destinationport']
             search_keyword.update({'destination_port': destination_port})
-
-        results = api_call.get_host_list(**search_keyword)      
-
-        for i in tag_list:
-            for j in results:
-                if j['subject']['hostGroupIds'][0] == i.tagid:
-                    j['subject']['hostGroupname'] = i.name
-                if j['peer']['hostGroupIds'][0] == i.tagid:
-                    j['peer']['hostGroupname'] = i.name
-
-        for i in results:
-            i['statistics']['firstActiveTime'] = datetime.datetime.strptime(i['statistics']['firstActiveTime'], '%Y-%m-%dT%H:%M:%S.%f+0000').replace(tzinfo=pytz.utc).astimezone()
-            i['statistics']['firstActiveTime'] = i['statistics']['firstActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
-        context = {'results': results, 'search_keyword': search_keyword}
-        return render(request, 'searched_flow.html', context)
-
-# top flow report 
-class TopFlowReport(TemplateView):
-    template_name = 'top_flow_report.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-
-        hosts_flow_results = api_call.get_flow_reports(search_item='top-hosts', maxRows=10)
-        services_flow_results = api_call.get_flow_reports(search_item='top-services', maxRows=10)
-        applications_flow_results = api_call.get_flow_reports(search_item='top-applications', maxRows=10)
-        conversations_flow_results = api_call.get_flow_reports(search_item='top-conversations', maxRows=10)
-
-        context['hosts_flow_results'] = hosts_flow_results['results']
-        context['services_flow_results'] = services_flow_results['results']
-        context['applications_flow_results'] = applications_flow_results['results']
-        context['conversations_flow_results'] = conversations_flow_results['results']
-        return context
-
-class SummaryFlowHosts(TemplateView):
-    template_name = 'summary_host_flow.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
-
-class SummaryFlowHostsData(View):
-    def get(self, request):
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-        tag_list = TagList.objects.all()
-
-        hosts_flow_results = api_call.get_flow_reports(search_item='top-hosts')
-
-        for i in tag_list:
-            for j in hosts_flow_results['results']:
-                if j['host']['hostGroupIds'][0] == i.tagid:
-                    j['host']['hostGroupname'] = i.name
-
-        for i in hosts_flow_results['results']:
-            if i['host']['country'] in flag_dict:
-                i['host']['flag'] =  flag_dict.get(i['host']['country'])
-            else:
-                i['host']['flag'] = ''
         
-        results = {'hosts_flow_results': hosts_flow_results}
-        return JsonResponse(results)
+        if request.POST['destinationip']:
+            destination_ip = request.POST['destinationip']
+            search_keyword.update({'destination_ip': destination_ip})
 
-class SummaryFlowApplications(TemplateView):
-    template_name = 'summary_applications_flow.html'
+        if request.POST['destinationgroup']:
+            destination_group = request.POST['destinationgroup']
+            search_keyword.update({'destination_group': destination_group})
+            destinationgroup_resuslts = {}
+            for i in tag_list:
+                if i.tagid == int(destination_group):
+                    destinationgroup_resuslts['id']= i.tagid
+                    destinationgroup_resuslts['name']= i.name
+            context['destinationgroup'] = destination_group
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
+        # print(search_keyword)
+        context['search_keyword'] = search_keyword
+        results = api_call.get_host_list(**search_keyword)      
+        if results:
+            for i in tag_list:
+                for j in results:
+                    if j['subject']['hostGroupIds'][0] == i.tagid:
+                        j['subject']['hostGroupname'] = i.name
+                    if j['peer']['hostGroupIds'][0] == i.tagid:
+                        j['peer']['hostGroupname'] = i.name
 
-class SummaryFlowApplicationsData(View):
+            for i in results:
+                i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], '%Y-%m-%dT%H:%M:%S.%f+0000').replace(tzinfo=pytz.utc).astimezone()
+                i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S')
+                if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                    i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+                else:
+                    i['applicationName'] = 'Unassigned'
+            context['results'] = results
+        
+        return render(request, 'flow_status_searched_flow.html', context)
+
+class FlowStatusFlowSearchData(View):
     def get(self, request):
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-
-        applications_flow_results = api_call.get_flow_reports(search_item='top-applications')
-
-        results = {'applications_flow_results': applications_flow_results}
-        return JsonResponse(results)
-
-class SummaryFlowConversations(TemplateView):
-    template_name = 'summary_conversations_flow.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
-
-class SummaryFlowConversationsData(View):
-    def get(self, request):
+        results = {}
         api_config = ConfingApi().config_api()
         api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
         tag_list = TagList.objects.all()
 
-        conversations_flow_results = api_call.get_flow_reports(search_item='top-conversations')
-        # conversations_flow_results = read_json('get_reports_top-conversations.json')
+        flow_results = api_call.get_host_list(record_limit=1000)
+        # flow_results = read_json('get_flow_data.json')
+        if flow_results: 
+            # host group id - host group name 매핑
+            for i in tag_list:
+                for j in flow_results:
+                    if j['subject']['hostGroupIds'][0] == i.tagid:
+                        j['subject']['hostGroupname'] = i.name
+                    if j['peer']['hostGroupIds'][0] == i.tagid:
+                        j['peer']['hostGroupname'] = i.name
 
-        # for i in conversations_flow_results['results']:
-        #     if i.get('portProtocol').get('service'):
-        #         pass
-        #     else:
-        #         print(i)
+            date_format = '%Y-%m-%dT%H:%M:%S.%f+0000'
+            for i in flow_results:
+                i['statistics']['lastActiveTime'] = datetime.datetime.strptime(i['statistics']['lastActiveTime'], date_format).replace(tzinfo=pytz.utc).astimezone()
+                i['statistics']['lastActiveTime'] = i['statistics']['lastActiveTime'].strftime('%Y-%m-%d %H:%M:%S')   
+                i['subject']['hostGroupIds'] = i['subject']['hostGroupIds'][0]
+                i['peer']['hostGroupIds'] = i['peer']['hostGroupIds'][0]
+                if str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower() in port_dict:
+                    i['applicationName'] = port_dict.get(str(i['peer']['portProtocol']['port'])+i['peer']['portProtocol']['protocol'].lower())
+                else:
+                    i['applicationName'] = 'Unassigned'
+                if i['subject']['countryCode'] in flag_dict:
+                    i['subject']['flag'] = flag_dict.get(i['subject']['countryCode'])
+                else:
+                    i['subject']['flag'] = ''
 
-        for i in tag_list:
-            for j in conversations_flow_results['results']:
-                if j['host']['hostGroupIds'][0] == i.tagid:
-                    j['host']['hostGroupname'] = i.name
-                if j['peer']['hostGroupIds'][0] == i.tagid:
-                    j['peer']['hostGroupname'] = i.name
-
-        results = {'conversations_flow_results': conversations_flow_results}
-        return JsonResponse(results)
-    
-class ApplicationHostDetail(TemplateView):
-    template_name = 'host_detail_application.html'
-
-    def get_context_data(self, **kwargs):
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-        context = super().get_context_data(**kwargs)
-
-        hostgroup_detail = api_call.get_hostgroup_detail(self.kwargs['id'])
-        context['hostgroup_detail'] = hostgroup_detail
-        context['host_ip'] = self.kwargs['ip']
-
-        return context
-
-class ApplicationHostDetailData(View):
-    def get(self, request, id, ip):
-        api_config = ConfingApi().config_api()
-        api_call = ApiCall(api_config.ipaddress, api_config.username, api_config.password)
-        tag_list = TagList.objects.all()
-
-        conversations_flow_results = api_call.get_flow_reports(search_item='top-conversations', ipaddress=ip)
-        for i in tag_list:
-            for j in conversations_flow_results['results']:
-                if j['host']['hostGroupIds'][0] == i.tagid:
-                    j['host']['hostGroupname'] = i.name
-                if j['peer']['hostGroupIds'][0] == i.tagid:
-                    j['peer']['hostGroupname'] = i.name
-
-        final_list = []
-        for i in conversations_flow_results['results']:
-            result = {}
-            result['protocol'] = i['portProtocol']['protocol']
-            result['port'] = i['portProtocol']['port']
-
-            if i.get('portProtocol').get('service').get('name'):
-                result['applicationName'] = i.get('portProtocol').get('service').get('name')
-                # result['applicationName'] = i['portProtocol']['service']['name']
-            else:
-                result['applicationName'] = 'Unassigned'
-
-            final_list.append(result)
-
-        df = pd.DataFrame(final_list)
-        df['port_count'] = df.groupby(['protocol','port'])['protocol'].transform('count')
-
-        port_df = df.drop_duplicates(['protocol', 'port'], keep='first')
-        udp_list = port_df[port_df['protocol'] == 'UDP'].to_dict('records')
-        tcp_list = port_df[port_df['protocol'] == 'TCP'].to_dict('records')
-
-        results = {'udp_list': udp_list, 'tcp_list': tcp_list, 'conversations_flow_results': conversations_flow_results}
+            results = {'flow_results': flow_results}
         return JsonResponse(results)

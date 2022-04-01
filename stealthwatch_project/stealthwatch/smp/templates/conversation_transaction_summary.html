@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h4>Transaction Summary</h4>
+    </div>
+    <div class="card-deck">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Summary</h6>
+            </div>
+            <div class="card-body">
+                <h5 id="TotalConnections"></h5>
+                <h5 id="TotalFlows"></h5>
+                <h5 id="TotalPackets"></h5>
+                <h5 id="TotalBytes"></h5>
+                <h5 id="TotaltrafficRateMax"></h5>
+                <h5 id="TotaltrafficRateAvg"></h5>
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Top10 Conversation Bytes Rate (last 5 min)</h6>
+                <p class="m-0">전체 byte수 중에서 각 flow가 차지한 byte 수의 비율</p>
+            </div>
+            <div class="card-body">
+                <canvas id="myPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="card-deck">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">UDP port count
+                    <!-- <a class="float-right" href="#">more</a> -->
+                </h6>
+                <p class="m-0">udp를 사용한 flow의 protocol별 개수</p>
+            </div>
+            <div class="card-body">
+                <canvas id="UDPBarChart"></canvas>
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">TCP port count
+                    <!-- <a class="float-right" href="#">more</a> -->
+                </h6>
+                <p class="m-0">tcp를 사용한 flow의 protocol별 개수</p>
+            </div>
+            <div class="card-body">
+                <canvas id="TCPBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- bar chart -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Top 10 TCP Connections (last 5 min)</h6>
+        </div>
+        <div class="card-body">
+            <div style="position:relative; height:250px;">
+                <canvas id="BarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+<div class="wrap-loading display-none">
+    <img src="{% static 'image/loading.gif' %}" alt="loading" />
+</div> 
+</div>
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+<script src="{% static 'js/palette.js' %}"></script>
+<script>
+    var seq = palette('rainbow', 30).map(function(hex) {
+                return '#' + hex;
+        })
+
+    var Bytetohumansize = function(bpssize, si) {
+        var thresh = si ? 1000:1024;
+        if (Math.abs(bpssize) < thresh) {
+            return parseFloat(bpssize.toFixed(2)) + 'B';
+        }
+        var units = si ? ['kB', 'MB', 'GB', 'TB'] : ['KiB', 'MiB', 'GiB', 'TiB'];
+        var i = -1;
+        do {
+            bpssize /= thresh 
+            ++i
+        } while (Math.abs(bpssize) >= thresh && i < units.length -1);
+        return parseFloat(bpssize.toFixed(2)) + units[i]
+    }
+    $.ajax({
+        url: "{% url 'conversation_transaction_summary_data' %}",
+        method: "GET",
+        dataType: "json",
+        beforeSend:function(){
+            $('.wrap-loading').removeClass('display-none');
+        },
+        complete:function(){ 
+            $('.wrap-loading').addClass('display-none');
+        }
+     })
+    .done(function(data) {
+        if (Object.keys(data).length != 0){
+        BytesRate(data.conversations_flow_results.results)
+        TCPConnectionCount(data.conversations_flow_results.results)
+        TotalSummary(data.conversations_flow_results.summary)
+        UDPPortCount(data.udp_list);
+        TCPPortCount(data.tcp_list);
+        }
+    })
+    .fail(function(request,status,error) {
+        alert("code = "+ request.status + " error = " + error)
+    });
+
+    function BytesRate (chartdata) {
+        var HostName = [];
+        var ByteRate = [];
+        if (chartdata != null) {
+            chartdata.forEach(function(d, i) {
+                // console.log(d, i);
+                if(i<10){
+                    HostName.push(d.host.ipAddress);
+                    // ByteRate.push(d.bytes);
+                    ByteRate.push(d.percent);
+                }
+                }
+            );
+        }
+        var ctx = document.getElementById("myPieChart");
+        var myPieChart3 = new Chart(ctx, {
+            type: 'pie',
+            data: {
+            labels: HostName,
+            datasets: [{
+                data: ByteRate,
+                backgroundColor: seq,
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+                hoverOffset: 4,
+                borderWidth: 0
+            }],
+            },
+            options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+                callbacks:{
+                    label: function(tooltipItem, data){
+                        var dataset = data.datasets[tooltipItem.datasetIndex];
+                        var currentValue = dataset.data[tooltipItem.index];
+                        return data['labels'][tooltipItem.index] +': ' +  currentValue + "%";
+                    }
+                }
+            }, 
+            legend: {
+                position: 'right'
+            },
+            cutoutPercentage: 0,
+            },
+        });
+    }
+
+    // bar chart
+    function TCPConnectionCount (chartdata) {
+        var hostName = [];
+        var TCPConnectionCount = [];
+        var tcp_connection = [];
+        if (chartdata != null) {
+            tcp_connection = chartdata.sort(function(a,b){
+                return b.connections - a.connections
+            });
+    
+            tcp_connection.forEach(function(d, i) {
+                if (i<10){
+                    TCPConnectionCount.push(d.connections);
+                    hostName.push(d.host.ipAddress);
+                }
+            });
+        }
+
+        var ctx = document.getElementById("BarChart");
+        var myBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: hostName,
+                datasets: [{
+                    label: 'count',
+                    data: TCPConnectionCount,
+                    borderColor: "rgba(255, 201, 14, 1)",
+                    backgroundColor: "rgba(129, 193, 71, 0.8)",
+                    fill: false,
+                }]
+            },
+            options: {
+                legend:{
+                    display: false
+                },                                                                      
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 1,
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                scales: {
+                    xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: false,
+                            labelString: 'ip'
+                        },
+                    }],
+                    yAxes: [{
+                        display: true,
+                        ticks: {
+                            beginAtZero: true,
+                            autoSkip: false,
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'count'
+                        }
+                    }]
+                }
+            }
+        });
+    };
+    function UDPPortCount (chartdata) {
+        var udp_port = [];
+        var portName = [];
+        var portCount = [];
+        if (chartdata != null) {
+            udp_port = chartdata.sort(function(a,b){
+                return b.port_count - a.port_count
+            });
+    
+            udp_port.forEach(function(d, i) {
+                portCount.push(d.port_count);
+                if (d.name != 'Unassigned'){
+                    portName.push(d.name)
+                }else{
+                    portName.push(d.port)
+                };
+            });
+        }
+
+        var ctx = document.getElementById("UDPBarChart");
+        var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: portName,
+            datasets: [{
+                label: 'port count',
+                data: portCount,
+                borderColor: "rgba(255, 201, 14, 1)",
+                backgroundColor: 'rgba(255, 99, 132)',
+                fill: false,
+            }]
+        },
+        options: {
+            legend:{
+                display: false
+            },                                                                      
+            responsive: true,
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: false,
+                        labelString: 'port'
+                    },
+                }],
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        autoSkip: false,
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'count'
+                    }
+                }]
+            }
+        }
+        });
+    };
+    function TCPPortCount (chartdata) {
+        var portName = [];
+        var portCount = [];
+        var tcp_port = [];
+        
+        if (chartdata != null) {
+            tcp_port = chartdata.sort(function(a,b){
+                return b.port_count - a.port_count
+            });
+    
+            tcp_port.forEach(function(d, i) {
+                // portNum.push(d.port);
+                portCount.push(d.port_count);
+                if (d.name != 'Unassigned'){
+                    portName.push(d.name)
+                }else{
+                    portName.push(d.port)
+                }
+            });
+        }
+            
+
+        var ctx = document.getElementById("TCPBarChart");
+        var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: portName,
+            datasets: [{
+                label: 'port count',
+                data: portCount,
+                borderColor: "rgba(255, 201, 14, 1)",
+                backgroundColor: 'rgba(54, 162, 235)',
+                fill: false,
+            }]
+        },
+        options: {
+            legend:{display: false},
+            responsive: true,
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: false,
+                        labelString: 'port'
+                    },
+                }],
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        autoSkip: false,
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'count'
+                    }
+                }]
+            }
+        }
+        });
+    };
+    function TotalSummary(chartdata){
+        if (chartdata != null){
+            document.getElementById('TotalConnections').innerHTML = 'Total TCP Connections: ' + chartdata.connections + '개';
+            document.getElementById('TotalFlows').innerHTML = 'Total Flows: ' + chartdata.flows + '개';        
+            document.getElementById('TotalPackets').innerHTML = 'Total Packets: ' + chartdata.packets.toLocaleString('ko-KR') + '개';
+            // document.getElementById('TotalBytes').innerHTML = 'Total Bytes: ' + chartdata.bytes.toLocaleString('ko-KR') + ' bytes';
+            document.getElementById('TotalBytes').innerHTML = 'Total Bytes: ' + Bytetohumansize(chartdata.bytes, true);
+            document.getElementById('TotaltrafficRateMax').innerHTML = 'Total Traffic Rate Max: ' + chartdata.trafficRateMax + '%';
+            document.getElementById('TotaltrafficRateAvg').innerHTML = 'Total Traffic Rate Average: ' + chartdata.trafficRateAvg + '%';
+        }
+    }
+</script>
+{% endblock %}

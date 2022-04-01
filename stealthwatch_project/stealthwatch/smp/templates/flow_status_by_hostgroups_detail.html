@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h4><a href="{% url 'flow_status_by_hostgroups' %}">{{hostgroup_detail.parentDisplay.name}}</a> > <a href="{% url 'flow_status_by_hostgroup_detail' id=hostgroup_detail.id %}">{{hostgroup_detail.name}}</a></h4>
+    </div>
+    
+    <div class="card-deck">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">호스트 그룹 정보</h6>
+            </div>
+            <div class="card-body">
+                <h4>호스트 그룹: {{hostgroup_detail.name}}</h4>
+                <h4>정책: {{hostgroup_detail.location}}</h4>
+                {% for i in hostgroup_detail.ranges %}
+                <h4>ranges: {{i}}</h4>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">UDP port count (last 5 min)
+                </h6>
+                <p class="m-0">udp를 사용한 flow의 protocol별 개수</p>
+            </div>
+            <div class="card-body">
+                <canvas id="UDPBarChart"></canvas>
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">TCP port count (last 5 min)
+                </h6>
+                <p class="m-0">udp를 사용한 flow의 protocol별 개수</p>
+            </div>
+            <div class="card-body">
+                <canvas id="TCPBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% if host_list|length != 0 %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Host Group List</h6>
+        </div>
+        <div class="card-body d-sm-flex flex-wrap">
+            {% for host in host_list %}
+            <div class="card py-3 ml-2 mt-2" style="width: 10vw; justify-content: center; border-radius: 40px; background-color: #EAECEE;">
+                <div style="text-align:center; vertical-align: middle;">
+                    {% if host.children|length == 0 %}
+                    <a href="{% url 'flow_status_by_hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                    {% else %}
+                    <a href="{% url 'flow_status_by_hostgroup_detail' id=host.id %}?hostgroup={{hostgroup}}" style="color: black;">{{ host.name }}</a>
+                    <strong class="mr-3">{{host.children|length}}</strong>
+                    {% endif %}
+                </div>
+            </div>        
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    <div class="card-deck">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary"> Bps (Byte Rate) (last 5 min)
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="ByteChart"></canvas>
+            </div>
+        </div>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">RTT Average (last 5 min)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="myAreaChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Host List (last 5 min)</h6>
+        </div>
+        <div class="card-body">
+            <div class="row ml-2 mb-2">
+                <h4 id="HostlistLength"></h4>
+            </div>
+            <div class="row ml-1">
+                <div class="table-responsive">
+                    <table class="table compact stripe text-nowrap hover" id="FlowdataTable" width="100%">
+                        <thead>
+                            <tr>
+                                <th class="col-1">#</th>
+                                <th class="col-2">host ip</th>
+                                <th class="col-2">host group</th>
+                                <th class="col-2">flow count</th>
+                                <th class="col-4">Last active time</th>
+                                <th class="col-2">country</th>
+                                <th class="col-3">user name (ISE 연동)</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="host_list"></div>
+    <div class="wrap-loading display-none">
+        <img src="{% static 'image/loading.gif' %}" alt="loading" />
+    </div> 
+    
+</div>
+
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+<script src="{% static 'js/palette.js' %}"></script>
+
+<script>
+    function searchParam(key) {
+        return new URLSearchParams(location.search).get(key);
+    };
+    console.log(searchParam('hostgroup'));
+    if (searchParam('hostgroup') == 0){
+            var select_url = "{% url 'flow_status_by_hostgroup_detail_data' id=hostgroup_detail.id hostgroup=0 %}"
+        } else {
+            var select_url = "{% url 'flow_status_by_hostgroup_detail_data' id=hostgroup_detail.id hostgroup=1 %}"
+        }
+    console.log(select_url)
+
+    var seq = palette('rainbow', 10).map(function(hex) {
+                        return '#' + hex;
+                })
+
+    $.ajax({
+        url: select_url,
+        method: "GET",
+        dataType: "json",
+        beforeSend:function(){
+            $('.wrap-loading').removeClass('display-none');
+        },
+        complete:function(){
+            $('.wrap-loading').addClass('display-none');
+        }
+     })
+    .done(function(data) {
+        UDPPortCount(data.udp_list);
+        TCPPortCount(data.tcp_list);
+        HostListTable(data.host_list);
+        ByteRate(data.chart_results);
+        RTTAverage(data.chart_results);
+        // console.log(data.chart_results)
+    })
+
+    .fail(function(request,status,error) {
+        alert("code = "+ request.status + " error = " + error)
+    });
+
+    function UDPPortCount (chartdata) {
+        var udp_port = [];
+        var portName = [];
+        var portCount = [];
+        if (chartdata != null) {
+            udp_port = chartdata.sort(function(a,b){
+                return b.port_count - a.port_count
+            });
+    
+            udp_port.forEach(function(d, i) {
+                portCount.push(d.port_count);
+                if (d.applicationName != 'Unassigned'){
+                    portName.push(d.applicationName)
+                }else{
+                    portName.push(d.port)
+                };
+            });
+        }
+
+        var ctx = document.getElementById("UDPBarChart");
+        var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: portName,
+            datasets: [{
+                label: 'port count',
+                data: portCount,
+                borderColor: "rgba(255, 201, 14, 1)",
+                backgroundColor: 'rgba(255, 99, 132)',
+                fill: false,
+            }]
+        },
+        options: {
+            legend:{
+                display: false
+            },                                                                      
+            responsive: true,
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: false,
+                        labelString: 'port'
+                    },
+                }],
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        autoSkip: false,
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'count'
+                    }
+                }]
+            }
+        }
+        });
+    };
+    function TCPPortCount (chartdata) {
+        var portName = [];
+        var portCount = [];
+        var tcp_port = [];
+
+        if (chartdata != null){
+            tcp_port = chartdata.sort(function(a,b){
+                return b.port_count - a.port_count
+            });
+    
+            tcp_port.forEach(function(d, i) {
+                portCount.push(d.port_count);
+                if (d.applicationName != 'Unassigned'){
+                    portName.push(d.applicationName)
+                }else{
+                    portName.push(d.port)
+                }
+            });
+        } 
+
+        var ctx = document.getElementById("TCPBarChart");
+        var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: portName,
+            datasets: [{
+                label: 'port count',
+                data: portCount,
+                borderColor: "rgba(255, 201, 14, 1)",
+                backgroundColor: 'rgba(54, 162, 235)',
+                fill: false,
+            }]
+        },
+        options: {
+            legend:{display: false},
+            responsive: true,
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: false,
+                        labelString: 'port'
+                    },
+                }],
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        autoSkip: false,
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'count'
+                    }
+                }]
+            }
+        }
+        });
+    };
+
+    function HostListTable(chartdata){ 
+        var image_url = "/static/image/flags/";
+        var current_url = "{% url 'flow_status_by_hostgroup_detail' id=hostgroup_detail.id %}"
+        console.log(current_url)
+        var table = $('#FlowdataTable').DataTable({
+            "responsive": true, 
+            "order": [[ 3, "desc" ]],
+            "data": chartdata,
+            "columns": [
+                { data: null },
+                {
+                    data: "ipAddress",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<a href="' + current_url + 'hostdetail/'  + row.ipAddress + '">' + row.ipAddress + '</a>';
+
+                        }
+                        return data;
+                    }
+                },
+                { data: "hostGroupname" },
+                { data: "flow_count" },
+                { data: "lastActiveTime" },
+                {
+                    data: "countryflag",
+                    "render": function (data, type, row, meta) {
+                        if (data ==''){
+                            return 'N/A'
+                        }else{
+                            var flag_link = image_url + data;
+                            return  '<img height="25%" width="25%" src="'+ flag_link +'"/>';
+                        }
+                    }
+                },
+            ],
+            "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+            }],
+        });
+        table.on('order.dt search.dt', function () {
+                table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+        document.getElementById('HostlistLength').innerHTML = 'The number of active host list :' + table.rows().count()
+    };
+    function ByteRate (chartdata) {
+        var lastActiveTime = [];
+        var byteLabels = [];
+        var ByteRate = [];
+        var ipAddress = [];
+
+        if (chartdata != null) {
+            chartdata.forEach(function(d, i) {
+                byteLabels.push(d.time_range);
+                ByteRate.push(d.bps);
+                ipAddress.push(d.ipAddress)
+                lastActiveTime.push(d.lastActiveTime)
+                }
+            );
+        }
+
+        var ctx = document.getElementById("ByteChart");
+        var myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: byteLabels,
+            datasets: [{
+                label: "bps",
+                lineTension: 0,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: 'rgb(75, 192, 192)',
+                data: ByteRate,
+                // pointStyle: 'dash',
+                pointRadius: 0,
+                borderWidth: 2
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+            },
+            scales: {
+                xAxes: [{
+                    // type: 'time',
+                    time: {
+                        unit: 'date',
+                    },
+                    gridLines: {
+                        display: false,
+                        // drawBorder: false
+                    },
+                    ticks: {
+                        display: false,
+                        // maxTicksLimit: 10,
+                        fontSize : 10,
+                        // callback: function(value, index){
+                        //         return value.split(' ')[1].slice(3,8);
+                        //     }
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        maxTicksLimit: 5,
+                        padding: 10,
+                    },
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
+            },
+            legend: {
+                display: false
+            },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                titleMarginBottom: 5,
+                titleFontColor: "#858796",
+                titleFontStyle: {weight: 'normal'},
+                titleFontSize: 10,
+                bodyFontColor:  '#6e707e',
+                bodyFontStyle: {weight: 'bold'},
+                bodyFontSize: 13,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                intersect: false,
+                mode: 'index', 
+                caretPadding: 10,
+                callbacks: {
+                    title: function(tooltipItem, data){
+                        if (lastActiveTime[tooltipItem[0].index] == 0){
+                            return ;
+                        }else{
+                            return lastActiveTime[tooltipItem[0].index]+'\nIP: '+ipAddress[tooltipItem[0].index];
+                        }
+                    },
+                    label: function(tooltipItem, data){
+                        var dataset = data.datasets[tooltipItem.datasetIndex];
+                        var currentValue = dataset.data[tooltipItem.index];
+                        return 'bps: ' + parseFloat(currentValue.toFixed(3)) + ' bps'
+                    }
+                }
+            }
+        }
+        });
+    }
+    function RTTAverage (chartdata) {
+        var lastActiveTime  = [];
+        var rttLabels = [];
+        var rttAverage = [];
+        var ipAddress = [];
+        if (chartdata != null) {
+            chartdata.forEach(function(d, i) {
+                rttLabels.push(d.time_range);
+                rttAverage.push(d.rtt);
+                ipAddress.push(d.ipAddress);
+                lastActiveTime.push(d.lastActiveTime);
+                }
+            );
+        }
+
+        var ctx = document.getElementById("myAreaChart");
+        var myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: rttLabels,
+            datasets: [{
+                label: "RTT(ms)",
+                lineTension: 0,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: "rgba(78, 115, 223, 1)",
+                data: rttAverage,
+                // pointStyle: 'line',
+                pointRadius: 0,
+                borderWidth: 2,
+                fill: false,
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+            },
+            scales: {
+                xAxes: [{
+                    // type: 'time',
+                    time: {
+                        unit: 'date',
+                    },
+                    gridLines: {
+                        display: false,
+                        // drawBorder: false
+                    },
+                    ticks: {
+                        display: false,
+                        // maxTicksLimit: 10,
+                        fontSize : 10,
+
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        maxTicksLimit: 5,
+                        padding: 10,
+                    },
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
+            },
+            legend: {
+                display: false
+            },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                titleMarginBottom: 5,
+                titleFontColor: "#858796",
+                titleFontStyle: {weight: 'normal'},
+                titleFontSize: 10,
+                bodyFontColor:  '#6e707e',
+                bodyFontStyle: {weight: 'bold'},
+                bodyFontSize: 13,
+                // titleFontColor: '#6e707e',
+                // titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                intersect: false,
+                mode: 'index',
+                caretPadding: 10,
+                callbacks: {
+                    title: function(tooltipItem, data){
+                        if (lastActiveTime[tooltipItem[0].index] == 0){
+                            return ;
+                        }else{
+                            return lastActiveTime[tooltipItem[0].index]+'\nIP: '+ipAddress[tooltipItem[0].index];
+                        }
+                    },
+                    label: function(tooltipItem, data){
+                        var dataset = data.datasets[tooltipItem.datasetIndex];
+                        var currentValue = dataset.data[tooltipItem.index];
+                        return 'RTT: ' + currentValue + ' ms'
+                    }
+                }
+            }
+        }
+        });
+    }
+</script>
+{% endblock %}
