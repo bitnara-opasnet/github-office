@@ -1,0 +1,34 @@
+1. introduction
+1.1. rfc
+https://datatracker.ietf.org/doc/html/rfc8040#section-1.2
+
+1.2. information 
+- YANG 모델 활용 가능. 
+- JSON or XML 데이터로 return. 
+- 현재는 NETCONF의 특징과 완전히 같지는 않지만, 하지만 추후에는 완전히 동등해질것으로 예상.  
+- 서로 다른 클라이언트가 동시에 NETCONF와 RESTCONF를 사용할 수 있음. 
+
+2. Operations
+RESTCONF	NETCONF
+GET	<get>, <get-config>
+POST	<edit-config> (operation="create")
+PUT	<edit-config> (operation="create/replace")
+PATCH	<edit-config> (operation="merge")
+DELETE	<edit-config> (operation="delete")
+
+3. Headers and MIME Types
+RESTCONF describes the following MIME types to be used in these headers to indicate the format being requested.
+application/yang-data+json
+application/yang-data+xml
+
+4. URI
+https://<ADDRESS>/<ROOT>/<DATA STORE>/<[YANG MODULE:]CONTAINER>/<LEAF>[?<OPTIONS>]
+
+5. example curl command
+curl -k \
+-H "Authorization: Basic cm9vdDpEX1ZheSFfMTAm" \
+-H "Accept: application/yang-data+json" \
+"https://ios-xe-mgmt.cisco.com:9443/restconf/data/ietf-interfaces:interfaces/interface=GigabitEthernet1?fields=name;description"
+
+참조1) https://developer.cisco.com/learning/modules/intro-device-level-interfaces/intro-restconf/step/2
+참조2) https://developer.cisco.com/learning/lab/lab03-using-restconf-to-interface-with-networking-devices/step/2

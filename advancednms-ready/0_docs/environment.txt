@@ -1,0 +1,2 @@
+OS: ubuntu 18.04.06
+Python: 3.6.9
