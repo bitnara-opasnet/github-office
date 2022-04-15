@@ -1,0 +1,980 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="urn:uuid:dee08ab3-260c-4e3c-b83f-eb2acc5c81e5"
+    xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+    <data>
+        <interfaces xmlns="http://openconfig.net/yang/interfaces">
+            <interface>
+                <name>FortyGigabitEthernet1/1/1</name>
+                <config>
+                    <name>FortyGigabitEthernet1/1/1</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>FortyGigabitEthernet1/1/2</name>
+                <config>
+                    <name>FortyGigabitEthernet1/1/2</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet0/0</name>
+                <config>
+                    <name>GigabitEthernet0/0</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/1</name>
+                <config>
+                    <name>GigabitEthernet1/0/1</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>### Shared BGP to SDA-L2 Gi1/0/1 ###</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>### Shared BGP to SDA-L2 Gi1/0/1 ###</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/10</name>
+                <config>
+                    <name>GigabitEthernet1/0/10</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/11</name>
+                <config>
+                    <name>GigabitEthernet1/0/11</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/12</name>
+                <config>
+                    <name>GigabitEthernet1/0/12</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>### iBGP Trunk to BD-2 Gi1/0/12 ###</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>### iBGP Trunk to BD-2 Gi1/0/12 ###</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/13</name>
+                <config>
+                    <name>GigabitEthernet1/0/13</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>### ISIS to BD-2 Gi1/0/13 ###</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>### ISIS to BD-2 Gi1/0/13 ###</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/14</name>
+                <config>
+                    <name>GigabitEthernet1/0/14</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>### ISIS to BD-2 Gi1/0/14 ###</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>### ISIS to BD-2 Gi1/0/14 ###</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/15</name>
+                <config>
+                    <name>GigabitEthernet1/0/15</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/16</name>
+                <config>
+                    <name>GigabitEthernet1/0/16</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/17</name>
+                <config>
+                    <name>GigabitEthernet1/0/17</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/18</name>
+                <config>
+                    <name>GigabitEthernet1/0/18</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/19</name>
+                <config>
+                    <name>GigabitEthernet1/0/19</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/2</name>
+                <config>
+                    <name>GigabitEthernet1/0/2</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>### VN BGP Trunk to SDA-L2 Gi1/0/3 ###</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>### VN BGP Trunk to SDA-L2 Gi1/0/3 ###</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/20</name>
+                <config>
+                    <name>GigabitEthernet1/0/20</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/21</name>
+                <config>
+                    <name>GigabitEthernet1/0/21</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/22</name>
+                <config>
+                    <name>GigabitEthernet1/0/22</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/23</name>
+                <config>
+                    <name>GigabitEthernet1/0/23</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/24</name>
+                <config>
+                    <name>GigabitEthernet1/0/24</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/25</name>
+                <config>
+                    <name>GigabitEthernet1/0/25</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/26</name>
+                <config>
+                    <name>GigabitEthernet1/0/26</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/27</name>
+                <config>
+                    <name>GigabitEthernet1/0/27</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/28</name>
+                <config>
+                    <name>GigabitEthernet1/0/28</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/29</name>
+                <config>
+                    <name>GigabitEthernet1/0/29</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/3</name>
+                <config>
+                    <name>GigabitEthernet1/0/3</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/30</name>
+                <config>
+                    <name>GigabitEthernet1/0/30</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/31</name>
+                <config>
+                    <name>GigabitEthernet1/0/31</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/32</name>
+                <config>
+                    <name>GigabitEthernet1/0/32</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/33</name>
+                <config>
+                    <name>GigabitEthernet1/0/33</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/34</name>
+                <config>
+                    <name>GigabitEthernet1/0/34</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/35</name>
+                <config>
+                    <name>GigabitEthernet1/0/35</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/36</name>
+                <config>
+                    <name>GigabitEthernet1/0/36</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/37</name>
+                <config>
+                    <name>GigabitEthernet1/0/37</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/38</name>
+                <config>
+                    <name>GigabitEthernet1/0/38</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/39</name>
+                <config>
+                    <name>GigabitEthernet1/0/39</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/4</name>
+                <config>
+                    <name>GigabitEthernet1/0/4</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/40</name>
+                <config>
+                    <name>GigabitEthernet1/0/40</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/41</name>
+                <config>
+                    <name>GigabitEthernet1/0/41</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/42</name>
+                <config>
+                    <name>GigabitEthernet1/0/42</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/43</name>
+                <config>
+                    <name>GigabitEthernet1/0/43</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/44</name>
+                <config>
+                    <name>GigabitEthernet1/0/44</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/45</name>
+                <config>
+                    <name>GigabitEthernet1/0/45</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>### ISIS to ED-1 TE1/0/23 ###</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>### ISIS to ED-1 TE1/0/23 ###</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/46</name>
+                <config>
+                    <name>GigabitEthernet1/0/46</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>### ISIS to ED-1 TE1/0/24 ###</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>### ISIS to ED-1 TE1/0/24 ###</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/47</name>
+                <config>
+                    <name>GigabitEthernet1/0/47</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>Fabric Physical Link</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Fabric Physical Link</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/48</name>
+                <config>
+                    <name>GigabitEthernet1/0/48</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                    <description>Fabric Physical Link</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Fabric Physical Link</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/5</name>
+                <config>
+                    <name>GigabitEthernet1/0/5</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/6</name>
+                <config>
+                    <name>GigabitEthernet1/0/6</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/7</name>
+                <config>
+                    <name>GigabitEthernet1/0/7</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/8</name>
+                <config>
+                    <name>GigabitEthernet1/0/8</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/0/9</name>
+                <config>
+                    <name>GigabitEthernet1/0/9</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/1/1</name>
+                <config>
+                    <name>GigabitEthernet1/1/1</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/1/2</name>
+                <config>
+                    <name>GigabitEthernet1/1/2</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/1/3</name>
+                <config>
+                    <name>GigabitEthernet1/1/3</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>GigabitEthernet1/1/4</name>
+                <config>
+                    <name>GigabitEthernet1/1/4</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>LISP0</name>
+                <config>
+                    <name>LISP0</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:propVirtual</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                    <subinterface>
+                        <index>4097</index>
+                    </subinterface>
+                    <subinterface>
+                        <index>4099</index>
+                    </subinterface>
+                    <subinterface>
+                        <index>4100</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Loopback0</name>
+                <config>
+                    <name>Loopback0</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+                    <description>Fabric Node Router ID</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Fabric Node Router ID</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Loopback1021</name>
+                <config>
+                    <name>Loopback1021</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+                    <description>Loopback Border</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Loopback Border</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Loopback1022</name>
+                <config>
+                    <name>Loopback1022</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+                    <description>Loopback Border</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Loopback Border</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Loopback1027</name>
+                <config>
+                    <name>Loopback1027</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+                    <description>Loopback Border</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Loopback Border</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Loopback1028</name>
+                <config>
+                    <name>Loopback1028</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+                    <description>Loopback Border</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Loopback Border</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Loopback1029</name>
+                <config>
+                    <name>Loopback1029</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+                    <description>Loopback Border</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Loopback Border</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Loopback2045</name>
+                <config>
+                    <name>Loopback2045</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
+                    <description>Loopback Border</description>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                        <config>
+                            <description>Loopback Border</description>
+                        </config>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/1</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/1</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/2</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/2</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/3</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/3</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/4</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/4</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/5</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/5</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/6</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/6</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/7</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/7</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TenGigabitEthernet1/1/8</name>
+                <config>
+                    <name>TenGigabitEthernet1/1/8</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TwentyFiveGigE1/1/1</name>
+                <config>
+                    <name>TwentyFiveGigE1/1/1</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>TwentyFiveGigE1/1/2</name>
+                <config>
+                    <name>TwentyFiveGigE1/1/2</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+                </config>
+                <subinterfaces>
+                    <subinterface>
+                        <index>0</index>
+                    </subinterface>
+                </subinterfaces>
+            </interface>
+            <interface>
+                <name>Vlan1</name>
+                <config>
+                    <name>Vlan1</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:l3ipvlan</type>
+                </config>
+            </interface>
+            <interface>
+                <name>Vlan3001</name>
+                <config>
+                    <name>Vlan3001</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:l3ipvlan</type>
+                    <description>vrf interface to External router</description>
+                </config>
+            </interface>
+            <interface>
+                <name>Vlan3002</name>
+                <config>
+                    <name>Vlan3002</name>
+                    <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:l3ipvlan</type>
+                    <description>vrf interface to External router</description>
+                </config>
+            </interface>
+        </interfaces>
+    </data>
+</rpc-reply>

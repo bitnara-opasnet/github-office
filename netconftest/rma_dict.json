@@ -1,0 +1,285 @@
+{
+    "http://wadl.dev.java.net/2009/02:application": {
+        "http://wadl.dev.java.net/2009/02:doc": {
+            "@http://www.w3.org/XML/1998/namespace:lang": "en",
+            "@title": "Cisco Return API v1.0 (Service Order return)",
+            "@xmlns": {
+                "": "http://wadl.dev.java.net/2009/02"
+            }
+        },
+        "http://wadl.dev.java.net/2009/02:resources": {
+            "@base": "https://api.cisco.com",
+            "http://wadl.dev.java.net/2009/02:resource": {
+                "@path": "return",
+                "@id": "return",
+                "http://wadl.dev.java.net/2009/02:doc": {
+                    "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                    "@title": "return"
+                },
+                "http://wadl.dev.java.net/2009/02:resource": {
+                    "@path": "{version}",
+                    "@id": "{version}",
+                    "http://wadl.dev.java.net/2009/02:doc": {
+                        "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                        "@title": "{version}"
+                    },
+                    "http://wadl.dev.java.net/2009/02:param": {
+                        "@name": "version",
+                        "@default": "v1.0",
+                        "@type": "xs:string",
+                        "@required": "true",
+                        "@style": "template",
+                        "@xmlns": {
+                            "xs": "http://www.w3.org/2001/XMLSchema"
+                        }
+                    },
+                    "http://wadl.dev.java.net/2009/02:resource": {
+                        "@path": "returns",
+                        "@id": "returns",
+                        "http://wadl.dev.java.net/2009/02:doc": {
+                            "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                            "@title": "returns"
+                        },
+                        "http://wadl.dev.java.net/2009/02:resource": [
+                            {
+                                "@path": "rma_numbers/{rma_numbers}",
+                                "@id": "RMA Details by RMA Number",
+                                "http://wadl.dev.java.net/2009/02:doc": {
+                                    "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                    "@title": "RMA Details by RMA Number"
+                                },
+                                "http://wadl.dev.java.net/2009/02:param": [
+                                    {
+                                        "@name": "rma_numbers",
+                                        "@type": "xs:string",
+                                        "@required": "true",
+                                        "@default": "",
+                                        "@style": "template",
+                                        "@xmlns": {
+                                            "xs": "http://www.w3.org/2001/XMLSchema"
+                                        },
+                                        "http://wadl.dev.java.net/2009/02:doc": {
+                                            "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                            "@title": "rma_numbers Parameter",
+                                            "#text": "Identifier of the RMA for which to return details. (only one RMA number) e.g. 84894022"
+                                        }
+                                    },
+                                    {
+                                        "@name": "pageIndex",
+                                        "@type": "xs:int",
+                                        "@required": "false",
+                                        "@default": "",
+                                        "@style": "query",
+                                        "@xmlns": {
+                                            "xs": "http://www.w3.org/2001/XMLSchema"
+                                        },
+                                        "http://wadl.dev.java.net/2009/02:doc": {
+                                            "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                            "@title": "pageIndex Parameter",
+                                            "#text": "page of results (default is page 1)"
+                                        }
+                                    }
+                                ],
+                                "http://wadl.dev.java.net/2009/02:method": {
+                                    "@name": "GET",
+                                    "@id": "GET",
+                                    "http://wadl.dev.java.net/2009/02:doc": {
+                                        "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                        "@title": "GET"
+                                    },
+                                    "http://wadl.dev.java.net/2009/02:request": null,
+                                    "http://wadl.dev.java.net/2009/02:response": [
+                                        {
+                                            "@status": "403",
+                                            "http://wadl.dev.java.net/2009/02:representation": {
+                                                "@mediaType": "application/json",
+                                                "@element": "ns:Fault",
+                                                "@xmlns": {
+                                                    "ns": "https://api.cisco.com/return/v1.0/returns/rma_numbers/84894022"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "@status": "200",
+                                            "http://wadl.dev.java.net/2009/02:representation": {
+                                                "@mediaType": "application/json",
+                                                "@element": "ns:Response",
+                                                "@xmlns": {
+                                                    "ns": "https://api.cisco.com/return/v1.0/returns/rma_numbers/84894022"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "@path": "users",
+                                "@id": "users",
+                                "http://wadl.dev.java.net/2009/02:doc": {
+                                    "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                    "@title": "users"
+                                },
+                                "http://wadl.dev.java.net/2009/02:resource": {
+                                    "@path": "user_ids/{user_ids}",
+                                    "@id": "RMAs by User ID",
+                                    "http://wadl.dev.java.net/2009/02:doc": {
+                                        "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                        "@title": "RMAs by User ID"
+                                    },
+                                    "http://wadl.dev.java.net/2009/02:param": [
+                                        {
+                                            "@name": "user_ids",
+                                            "@type": "xs:string",
+                                            "@required": "true",
+                                            "@default": "",
+                                            "@style": "template",
+                                            "@xmlns": {
+                                                "xs": "http://www.w3.org/2001/XMLSchema"
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:doc": {
+                                                "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                                "@title": "user_ids Parameter",
+                                                "#text": "Identifier of the user for which to return associated RMAs. Note: Only 1 user ID is accepted e.g. svorma8"
+                                            }
+                                        },
+                                        {
+                                            "@name": "pageIndex",
+                                            "@type": "xs:int",
+                                            "@required": "false",
+                                            "@default": "",
+                                            "@style": "query",
+                                            "@xmlns": {
+                                                "xs": "http://www.w3.org/2001/XMLSchema"
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:doc": {
+                                                "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                                "@title": "pageIndex Parameter",
+                                                "#text": "page index of result (default is page 1)"
+                                            }
+                                        },
+                                        {
+                                            "@name": "fromDate",
+                                            "@type": "xs:string",
+                                            "@required": "false",
+                                            "@default": "",
+                                            "@style": "query",
+                                            "@xmlns": {
+                                                "xs": "http://www.w3.org/2001/XMLSchema"
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:doc": {
+                                                "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                                "@title": "fromDate Parameter",
+                                                "#text": "Beginning date from which to return results. Date must be GMT in the following format: YYYY-MM-DD"
+                                            }
+                                        },
+                                        {
+                                            "@name": "toDate",
+                                            "@type": "xs:string",
+                                            "@required": "false",
+                                            "@default": "",
+                                            "@style": "query",
+                                            "@xmlns": {
+                                                "xs": "http://www.w3.org/2001/XMLSchema"
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:doc": {
+                                                "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                                "@title": "toDate Parameter",
+                                                "#text": "End date from which to return results. Date must be GMT in the following format: YYYY-MM-DD"
+                                            }
+                                        },
+                                        {
+                                            "@name": "status",
+                                            "@type": "xs:string",
+                                            "@required": "false",
+                                            "@default": "",
+                                            "@style": "query",
+                                            "@xmlns": {
+                                                "xs": "http://www.w3.org/2001/XMLSchema"
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:doc": {
+                                                "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                                "@title": "status Parameter",
+                                                "#text": "Status of the RMA on which to filter results; (only one status) Default is All"
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:option": [
+                                                {
+                                                    "@value": "open"
+                                                },
+                                                {
+                                                    "@value": "booked"
+                                                },
+                                                {
+                                                    "@value": "hold"
+                                                },
+                                                {
+                                                    "@value": "closed"
+                                                },
+                                                {
+                                                    "@value": "cancelled"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "@name": "sortBy",
+                                            "@type": "xs:string",
+                                            "@required": "false",
+                                            "@default": "",
+                                            "@style": "query",
+                                            "@xmlns": {
+                                                "xs": "http://www.w3.org/2001/XMLSchema"
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:doc": {
+                                                "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                                "@title": "sortBy Parameter",
+                                                "#text": "Value on which to sort the results; one of the following values: orderdate (default) or status."
+                                            },
+                                            "http://wadl.dev.java.net/2009/02:option": [
+                                                {
+                                                    "@value": "orderdate"
+                                                },
+                                                {
+                                                    "@value": "status"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "http://wadl.dev.java.net/2009/02:method": {
+                                        "@name": "GET",
+                                        "@id": "GET",
+                                        "http://wadl.dev.java.net/2009/02:doc": {
+                                            "@http://www.w3.org/XML/1998/namespace:lang": "en",
+                                            "@title": "GET"
+                                        },
+                                        "http://wadl.dev.java.net/2009/02:request": null,
+                                        "http://wadl.dev.java.net/2009/02:response": [
+                                            {
+                                                "@status": "200",
+                                                "http://wadl.dev.java.net/2009/02:representation": {
+                                                    "@mediaType": "application/json",
+                                                    "@element": "dir:Response",
+                                                    "@xmlns": {
+                                                        "dir": "https://api.cisco.com/return/v1.0/returns/users/user_ids/directcust4"
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "@status": "403",
+                                                "http://wadl.dev.java.net/2009/02:representation": {
+                                                    "@mediaType": "application/json",
+                                                    "@element": "dir:Fault",
+                                                    "@xmlns": {
+                                                        "dir": "https://api.cisco.com/return/v1.0/returns/users/user_ids/directcust4"
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
